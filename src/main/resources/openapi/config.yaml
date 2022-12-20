@@ -5,10 +5,11 @@ info:
 paths:
   /config/entries:
     parameters:
+      - $ref: headers/okapi-permissions.yaml
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
       - $ref: headers/okapi-url.yaml
-      - $ref: headers/okapi-permissions.yaml
+      - $ref: headers/okapi-user.yaml
       - $ref: parameters/limit.yaml
       - $ref: parameters/offset.yaml
       - $ref: parameters/query.yaml
@@ -65,10 +66,11 @@ paths:
           $ref: "#/components/responses/trait_500"
   /config/entries/{id}:
     parameters:
+      - $ref: headers/okapi-permissions.yaml
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
       - $ref: headers/okapi-url.yaml
-      - $ref: headers/okapi-permissions.yaml
+      - $ref: headers/okapi-user.yaml
       - in: path
         name: id
         required: true

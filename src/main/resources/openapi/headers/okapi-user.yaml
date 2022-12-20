@@ -1,0 +1,6 @@
+in: header
+name: X-Okapi-User-Id
+description: Okapi user identifier
+required: false
+schema:
+  type: string

@@ -36,7 +36,7 @@
     <vertx.verticle>org.folio.config.server.main.MainVerticle</vertx.verticle>
   </properties>
 
-    <dependencies>
+  <dependencies>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-core</artifactId>
@@ -76,6 +76,14 @@
     <dependency>
       <groupId>org.folio.okapi</groupId>
       <artifactId>okapi-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
     </dependency>
     <!-- Test dependencies -->
     <dependency>
@@ -404,6 +412,6 @@
 
   <issueManagement>
     <system>JIRA</system>
-    <url>https://issues.folio.org/browse/RSRVR</url>
+    <url>https://issues.folio.org/browse/MODCFG</url>
   </issueManagement>
 </project>
