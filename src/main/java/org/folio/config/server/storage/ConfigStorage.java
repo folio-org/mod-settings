@@ -28,6 +28,14 @@ public class ConfigStorage {
 
   private final UUID currentUser;
 
+
+  /**
+   * Construct storage request for a user with given okapi permissions.
+   * @param vertx Vert.x handle
+   * @param tenant tenant
+   * @param currentUser UUID of user as it comes from X-Okapi-User-Id
+   * @param permissions permissions as it comes from X-Okapi-Permissions
+   */
   public ConfigStorage(Vertx vertx, String tenant, UUID currentUser, JsonArray permissions) {
     this.pool = TenantPgPool.pool(vertx, tenant);
     this.permissions = permissions;
@@ -35,7 +43,10 @@ public class ConfigStorage {
     this.configTable = pool.getSchema() + ".config";
   }
 
-
+  /**
+   * Prepares storage for a tenant, AKA tenant init.
+   * @return async result
+   */
   public Future<Void> init() {
     return pool.execute(List.of(
         CREATE_IF_NO_EXISTS + configTable
@@ -50,7 +61,16 @@ public class ConfigStorage {
         ));
   }
 
-  static boolean checkDesiredPermissions(String type, JsonArray permissions, Entry entry, UUID currentUser) {
+  /**
+   * Checks if access is allowed for configurations entry.
+   * @param type read/write value
+   * @param permissions permissions given at runtime
+   * @param entry configurations entry that we check against
+   * @param currentUser user as it is given at runtime
+   * @return true if access is OK; false otherwise (forbidden)
+   */
+  static boolean checkDesiredPermissions(String type, JsonArray permissions, Entry entry,
+      UUID currentUser) {
     UUID userId = entry.getUserId();
     if (userId == null) {
       return permissions.contains("config.global." + type + "." + entry.getScope());
@@ -58,10 +78,15 @@ public class ConfigStorage {
     if (permissions.contains("config.others." + type + "." + entry.getScope())) {
       return true;
     }
-    return permissions.contains("config.user." + type + "." + entry.getScope()) &&
-          currentUser != null && currentUser.equals(entry.getUserId());
+    return permissions.contains("config.user." + type + "." + entry.getScope())
+        && currentUser != null && currentUser.equals(entry.getUserId());
   }
 
+  /**
+   * Create configurations entry.
+   * @param entry to be created
+   * @return async result with success if created; failed otherwise
+   */
   public Future<Void> createEntry(Entry entry) {
     if (!checkDesiredPermissions("write", permissions, entry, currentUser)) {
       return Future.failedFuture(new ForbiddenException());
@@ -86,6 +111,11 @@ public class ConfigStorage {
     return entry;
   }
 
+  /**
+   * Get configurations entry.
+   * @param id entry identifier
+   * @return async result with entry value; failure otherwise
+   */
   public Future<Entry> getEntry(UUID id) {
     return pool.preparedQuery(
             "SELECT * FROM " + configTable + " WHERE id = $1")

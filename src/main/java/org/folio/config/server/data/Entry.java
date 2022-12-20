@@ -2,10 +2,9 @@ package org.folio.config.server.data;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.vertx.core.json.JsonObject;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -53,6 +52,10 @@ public class Entry {
     value.put(key, val);
   }
 
+  /**
+   * Get value as JsonObject.
+   * @return JsonObject
+   */
   @JsonIgnore
   public JsonObject getValue() {
     JsonObject ret = new JsonObject();

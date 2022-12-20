@@ -13,6 +13,7 @@ import io.vertx.ext.web.openapi.RouterBuilder;
 import io.vertx.ext.web.validation.RequestParameter;
 import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.config.server.data.Entry;
@@ -23,13 +24,11 @@ import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.tlib.RouterCreator;
 import org.folio.tlib.TenantInitHooks;
 
-import java.util.UUID;
-
 public class ConfigService implements RouterCreator, TenantInitHooks {
 
   public static final int BODY_LIMIT = 65536; // 64 kb
 
-  private final static Logger log = LogManager.getLogger("ConfigService");
+  private static final Logger log = LogManager.getLogger("ConfigService");
 
   @Override
   public Future<Router> createRouter(Vertx vertx) {
@@ -71,6 +70,11 @@ public class ConfigService implements RouterCreator, TenantInitHooks {
         .failureHandler(this::failureHandler);
   }
 
+  /**
+   * Helper to create ConfigStorage from routing context.
+   * @param ctx rouging context.
+   * @return ConfigStorage instance
+   */
   public static ConfigStorage create(RoutingContext ctx) {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     // get tenant
