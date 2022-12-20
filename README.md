@@ -34,15 +34,15 @@ CREATE USER folio WITH CREATEROLE PASSWORD 'folio';
 GRANT ALL PRIVILEGES ON DATABASE folio_modules TO folio;
 ```
 
-The server's database connection is then configured by setting environment
+The module's database connection is then configured by setting environment
 variables:
 `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`,
 `DB_MAXPOOLSIZE`, `DB_SERVER_PEM`.
 
-Once configured, start the server with:
+Once configured, start the module with:
 
 ```
-java -Dport=8081-jar server/target/mod-config-fat.jar
+java -Dport=8081-jar target/mod-config-fat.jar
 ```
 
 ## Running with Docker
@@ -53,7 +53,7 @@ If you feel adventurous and want to run Reservoir in a docker container, build t
 docker build -t mod-config:latest .
 ```
 
-And run with the server port exposed (`8081` by default):
+And run with the module port exposed (`8081` by default):
 
 ```
 docker run -e DB_HOST=host.docker.internal \
