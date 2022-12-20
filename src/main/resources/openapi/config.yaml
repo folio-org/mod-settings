@@ -8,11 +8,19 @@ paths:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
       - $ref: headers/okapi-url.yaml
+      - $ref: headers/okapi-permissions.yaml
       - $ref: parameters/limit.yaml
       - $ref: parameters/offset.yaml
       - $ref: parameters/query.yaml
     get:
-      description: Get configuration entries
+      description: >
+        Get configuration entries with optional CQL query.
+        If X-Okapi-Permissions includes config.global.read then entries
+        without a userId are returned.
+        If X-Okapi-Permissions includes config.others.read then entries
+        with a userId are returned.
+        If X-Okapi-Permissions includes config.user.read then entries
+        with userId = current-user are returned.
       operationId: getConfigurationEntries
       responses:
         "200":
@@ -30,7 +38,14 @@ paths:
         "500":
           $ref: "#/components/responses/trait_500"
     post:
-      description: Create configuration entry
+      description: >
+        Create configuration entry.
+        If X-Okapi-Permissions includes config.global.read, then an entry without
+        a userId may be created.
+        If X-Okapi-Permissions includes config.others.read, then an entry with a
+        userId may be created.
+        If X-Okapi-Permissions includes config.user.read, then an entry with
+        userId = current-user may be created.
       operationId: postConfigurationEntry
       requestBody:
         content:
@@ -53,6 +68,7 @@ paths:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
       - $ref: headers/okapi-url.yaml
+      - $ref: headers/okapi-permissions.yaml
       - in: path
         name: id
         required: true
@@ -61,7 +77,14 @@ paths:
           type: string
           format: uuid
     get:
-      description: Get configuration entry
+      description: >
+        Get configuration entry.
+        If X-Okapi-Permissions includes config.global.read, then an entry without
+        a userId may be retrieved.
+        If X-Okapi-Permissions includes config.others.read, then an entry with a
+        userId may be retrieved.
+        If X-Okapi-Permissions includes config.user.read, then an entry with
+        userId = current-user may be retrieved.
       operationId: getConfigurationEntry
       responses:
         "200":
@@ -79,7 +102,14 @@ paths:
         "500":
           $ref: "#/components/responses/trait_500"
     put:
-      description: Update configuration entry
+      description: >
+        Update configuration entry.
+        If X-Okapi-Permissions includes config.global.read, then an entry without
+        a userId may be updated.
+        If X-Okapi-Permissions includes config.others.read, then an entry with a
+        userId may be updated.
+        If X-Okapi-Permissions includes config.user.read, then an entry with
+        userId = current-user may be updated.
       operationId: putConfigurationEntry
       requestBody:
         content:
@@ -89,6 +119,27 @@ paths:
       responses:
         "204":
           description: Configuration entry updated
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "403":
+          $ref: "#/components/responses/trait_403"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    delete:
+      description: >
+        Delete configuration entry.
+        If X-Okapi-Permissions includes config.global.read, then an entry without
+        a userId may be deleted.
+        If X-Okapi-Permissions includes config.others.read, then an entry with a
+        userId may be deleted.
+        If X-Okapi-Permissions includes config.user.read, then an entry with
+        userId = current-user may be deleted.
+      operationId: deletedConfigurationEntry
+      responses:
+        "204":
+          description: Configuration entry deleted
         "400":
           $ref: "#/components/responses/trait_400"
         "403":
@@ -116,7 +167,7 @@ components:
         text/plain:
           schema:
             type: string
-            example: Insufficient permissions to acccess resource
+            example: Insufficient permissions to access resource
         application/json:
           schema:
             type: object
