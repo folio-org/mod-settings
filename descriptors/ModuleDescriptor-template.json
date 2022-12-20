@@ -35,9 +35,9 @@
             "config.entries.item.post"
           ],
           "permissionsDesired": [
-            "config.global.*.write",
-            "config.user.*.write",
-            "config.others.*.write"
+            "config.global.write.*",
+            "config.user.write.*",
+            "config.others.write.*"
           ]
         },
         {
@@ -49,9 +49,9 @@
             "config.entries.collection.get"
           ],
           "permissionsDesired": [
-            "config.global.*.read",
-            "config.user.*.read",
-            "config.others.*.read"
+            "config.global.read.*",
+            "config.user.read.*",
+            "config.others.read.*"
           ]
         },
         {
@@ -63,9 +63,9 @@
             "config.entries.item.get"
           ],
           "permissionsDesired": [
-            "config.global.*.read",
-            "config.user.*.read",
-            "config.others.*.read"
+            "config.global.read.*",
+            "config.user.read.*",
+            "config.others.read.*"
           ]
         },
         {
@@ -77,9 +77,9 @@
             "config.entries.item.put"
           ],
           "permissionsDesired": [
-            "config.global.*.write",
-            "config.user.*.write",
-            "config.others.*.write"
+            "config.global.write.*",
+            "config.user.write.*",
+            "config.others.write.*"
           ]
         },
         {
@@ -91,9 +91,9 @@
             "config.entries.item.delete"
           ],
           "permissionsDesired": [
-            "config.global.*.write",
-            "config.user.*.write",
-            "config.others.*.write"
+            "config.global.write.*",
+            "config.user.write.*",
+            "config.others.write.*"
           ]
         }
       ]
