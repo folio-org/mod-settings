@@ -1,0 +1,144 @@
+openapi: 3.0.0
+info:
+  title: Config
+  version: v1
+paths:
+  /config/entries:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - $ref: parameters/limit.yaml
+      - $ref: parameters/offset.yaml
+      - $ref: parameters/query.yaml
+    get:
+      description: Get configuration entries
+      operationId: getConfigurationEntries
+      responses:
+        "200":
+          description: Configuration entries
+          content:
+            application/json:
+              schema:
+                $ref: schemas/entries.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "403":
+          $ref: "#/components/responses/trait_403"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    post:
+      description: Create configuration entry
+      operationId: postConfigurationEntry
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas/entry.json
+      responses:
+        "204":
+          description: Configuration entry created
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "403":
+          $ref: "#/components/responses/trait_403"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+  /config/entries/{id}:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - in: path
+        name: id
+        required: true
+        description: configuration identifier
+        schema:
+          type: string
+          format: uuid
+    get:
+      description: Get configuration entry
+      operationId: getConfigurationEntry
+      responses:
+        "200":
+          description: Configuration entry
+          content:
+            application/json:
+              schema:
+                $ref: schemas/entry.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "403":
+          $ref: "#/components/responses/trait_403"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    put:
+      description: Update configuration entry
+      operationId: putConfigurationEntry
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas/entry.json
+      responses:
+        "204":
+          description: Configuration entry updated
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "403":
+          $ref: "#/components/responses/trait_403"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+components:
+  responses:
+    trait_400:
+      description: Bad request
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Invalid JSON in request
+        application/json:
+          schema:
+            type: object
+            example: {"error":"Invalid JSON in request"}
+    trait_403:
+      description: Forbidden
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Insufficient permissions to acccess resource
+        application/json:
+          schema:
+            type: object
+            example: {"error":"Insufficient permissions to access resource"}
+    trait_404:
+      description: Not Found
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Identifier 596d9f60-cda3-44d2-a4a1-2f48b7d4d23c not found
+        application/json:
+          schema:
+            type: object
+            example: {"error":"Identifier 596d9f60-cda3-44d2-a4a1-2f48b7d4d23c not found"}
+    trait_500:
+      description: Internal error
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Internal server error, contact administrator
+  schemas:
+    errors:
+      $ref: schemas/errors.json

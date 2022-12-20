@@ -1,0 +1,183 @@
+{
+  "id": "${artifactId}-${version}",
+  "name": "config",
+  "provides": [
+    {
+      "id": "_tenant",
+      "version": "2.0",
+      "interfaceType": "system",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/_/tenant"
+        },
+        {
+          "methods": [
+            "GET",
+            "DELETE"
+          ],
+          "pathPattern": "/_/tenant/{id}"
+        }
+      ]
+    },
+    {
+      "id": "config",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/config/entries",
+          "permissionsRequired": [
+            "config.entries.item.post"
+          ],
+          "permissionsDesired": [
+            "config.byScope.*.global.write",
+            "config.byScope.*.user.write"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/config/entries",
+          "permissionsRequired": [
+            "config.entries.collection.get"
+          ],
+          "permissionsDesired": [
+            "config.byScope.*.global.read",
+            "config.byScope.*.user.read"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/config/entries/{id}",
+          "permissionsRequired": [
+            "config.entries.item.get"
+          ],
+          "permissionsDesired": [
+            "config.byScope.*.global.read",
+            "config.byScope.*.user.read"
+          ]
+        },
+        {
+          "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/config/entries/{id}",
+          "permissionsRequired": [
+            "config.entries.item.put"
+          ],
+          "permissionsDesired": [
+            "config.byScope.*.global.write",
+            "config.byScope.*.user.write"
+          ]
+        },
+        {
+          "methods": [
+            "DELETE"
+          ],
+          "pathPattern": "/config/entries/{id}",
+          "permissionsRequired": [
+            "config.entries.item.delete"
+          ],
+          "permissionsDesired": [
+            "config.byScope.*.global.write",
+            "config.byScope.*.user.write"
+          ]
+        }
+      ]
+    }
+  ],
+  "requires": [],
+  "permissionSets": [
+    {
+      "permissionName": "config.entries.item.post",
+      "displayName": "config - create configuration entry",
+      "description": "Create configuration entry"
+    },
+    {
+      "permissionName": "config.entries.collection.get",
+      "displayName": "config - get configuration entries",
+      "description": "Get configuration entries"
+    },
+    {
+      "permissionName": "config.entries.item.get",
+      "displayName": "config - get configuration entry",
+      "description": "Get configuration entry"
+    },
+    {
+      "permissionName": "config.entries.item.put",
+      "displayName": "config - update configuration entry",
+      "description": "Update configuration entry"
+    },
+    {
+      "permissionName": "config.entries.item.delete",
+      "displayName": "config - delete configuration entry",
+      "description": "Deletee configuration entry"
+    },
+    {
+      "permissionName": "config.entries.all",
+      "displayName": "config - All configuration permissions",
+      "description": "All configuration permissions",
+      "subPermissions": [
+        "config.entries.item.post",
+        "config.entries.collection.get",
+        "config.entries.item.get",
+        "config.entries.item.put",
+        "config.entries.item.delete"
+      ]
+    }
+  ],
+  "launchDescriptor": {
+    "dockerImage": "${artifactId}:${version}",
+    "dockerPull": false,
+    "dockerArgs": {
+      "HostConfig": {
+        "Memory": 2147483648,
+        "PortBindings": {
+          "8081/tcp": [
+            {
+              "HostPort": "%p"
+            }
+          ]
+        }
+      }
+    },
+    "env": [
+      {
+        "name": "JAVA_OPTIONS",
+        "value": "-XX:MaxRAMPercentage=66.0"
+      },
+      {
+        "name": "DB_HOST",
+        "value": "postgres"
+      },
+      {
+        "name": "DB_PORT",
+        "value": "5432"
+      },
+      {
+        "name": "DB_USERNAME",
+        "value": "folio_admin"
+      },
+      {
+        "name": "DB_PASSWORD",
+        "value": "folio_admin"
+      },
+      {
+        "name": "DB_DATABASE",
+        "value": "okapi_modules"
+      },
+      {
+        "name": "DB_MAXPOOLSIZE",
+        "value": "5"
+      }
+    ]
+  }
+}
