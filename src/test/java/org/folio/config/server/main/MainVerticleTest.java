@@ -8,8 +8,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.config.server.TestBase;
 import org.folio.okapi.common.XOkapiHeaders;
-import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -35,18 +33,18 @@ public class MainVerticleTest extends TestBase {
     RestAssured.given()
         .baseUri(MODULE_URL)
         .get("/admin/health")
-        .then().statusCode(200)
-        .header("Content-Type", is("text/plain"));
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.TEXT);
   }
 
-  @Ignore
   @Test
   public void testCrud() {
     JsonObject en = new JsonObject()
         .put("id", UUID.randomUUID().toString())
         .put("scope", "s1")
         .put("key", "k1")
-        .put("value", "v1");
+        .put("value", new JsonObject().put("v", "thevalue"));
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .contentType(ContentType.JSON)
@@ -58,7 +56,16 @@ public class MainVerticleTest extends TestBase {
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .get("/config/entries/" + en.getString("id"))
         .then()
-        .statusCode(200)
-        .contentType(ContentType.JSON);
+        .statusCode(500)
+        .contentType(ContentType.TEXT)
+        .body(is("Not implemented"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .get("/config/entries")
+        .then()
+        .statusCode(500)
+        .contentType(ContentType.TEXT)
+        .body(is("Not implemented"));
   }
 }

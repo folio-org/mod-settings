@@ -4,6 +4,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -58,17 +59,16 @@ public class ConfigService implements RouterCreator, TenantInitHooks {
   }
 
   Future<Void> getConfigurationEntries(Vertx vertx, RoutingContext ctx) {
-    System.out.println("getConfigurationEntries");
     return Future.failedFuture("Not implemented");
   }
 
   Future<Void> postConfigurationEntry(Vertx vertx, RoutingContext ctx) {
-    System.out.println("postConfigurationEntry");
-    return Future.failedFuture("Not implemented");
+    HttpServerResponse response = ctx.response();
+    response.setStatusCode(204);
+    return response.end();
   }
 
   Future<Void> getConfigurationEntry(Vertx vertx, RoutingContext ctx) {
-    System.out.println("getConfigurationEntry");
     return Future.failedFuture("Not implemented");
   }
 
