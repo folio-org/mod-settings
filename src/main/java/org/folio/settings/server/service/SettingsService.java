@@ -64,41 +64,41 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
   private void handlers(Vertx vertx, RouterBuilder routerBuilder) {
     routerBuilder
         .operation("getSettings")
-        .handler(ctx -> getSettings(vertx, ctx)
+        .handler(ctx -> getSettings(ctx)
             .onFailure(cause -> commonError(ctx, cause))
         )
         .failureHandler(this::failureHandler);
 
     routerBuilder
         .operation("postSetting")
-        .handler(ctx -> postSetting(vertx, ctx)
+        .handler(ctx -> postSetting(ctx)
             .onFailure(cause -> commonError(ctx, cause))
         )
         .failureHandler(this::failureHandler);
     routerBuilder
         .operation("getSetting")
-        .handler(ctx -> getSetting(vertx, ctx)
+        .handler(ctx -> getSetting(ctx)
             .onFailure(cause -> commonError(ctx, cause))
         )
         .failureHandler(this::failureHandler);
     routerBuilder
         .operation("putSetting")
-        .handler(ctx -> updateSetting(vertx, ctx)
+        .handler(ctx -> updateSetting(ctx)
             .onFailure(cause -> commonError(ctx, cause))
         )
         .failureHandler(this::failureHandler);
     routerBuilder
         .operation("deleteSetting")
-        .handler(ctx -> deleteSetting(vertx, ctx)
+        .handler(ctx -> deleteSetting(ctx)
             .onFailure(cause -> commonError(ctx, cause))
         )
         .failureHandler(this::failureHandler);
   }
 
   /**
-   * Helper to create ConfigStorage from routing context.
+   * Helper to create SettingsStorage from routing context.
    * @param ctx rouging context.
-   * @return ConfigStorage instance
+   * @return SettingsStorage instance
    */
   public static SettingsStorage create(RoutingContext ctx) {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
@@ -127,17 +127,13 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
     return new SettingsStorage(ctx.vertx(), tenant, currentUserId, permissions);
   }
 
-  Future<Void> getSettings(Vertx vertx, RoutingContext ctx) {
-    return Future.failedFuture("Not implemented");
-  }
-
-  Future<Void> postSetting(Vertx vertx, RoutingContext ctx) {
+  Future<Void> postSetting(RoutingContext ctx) {
     try {
-      SettingsStorage configStorage = create(ctx);
+      SettingsStorage storage = create(ctx);
       RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
       RequestParameter body = params.body();
       Entry entry = body.getJsonObject().mapTo(Entry.class);
-      return configStorage.createEntry(entry)
+      return storage.createEntry(entry)
           .map(entity -> {
             ctx.response().setStatusCode(204);
             ctx.response().end();
@@ -149,12 +145,12 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
     }
   }
 
-  Future<Void> getSetting(Vertx vertx, RoutingContext ctx) {
+  Future<Void> getSetting(RoutingContext ctx) {
     try {
-      SettingsStorage configStorage = create(ctx);
+      SettingsStorage storage = create(ctx);
       RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
       String id  = params.pathParameter("id").getString();
-      return configStorage.getEntry(UUID.fromString(id))
+      return storage.getEntry(UUID.fromString(id))
           .map(entity -> {
             HttpResponse.responseJson(ctx, 200)
                     .end(JsonObject.mapFrom(entity).encode());
@@ -166,9 +162,9 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
     }
   }
 
-  Future<Void> updateSetting(Vertx vertx, RoutingContext ctx) {
+  Future<Void> updateSetting(RoutingContext ctx) {
     try {
-      SettingsStorage configStorage = create(ctx);
+      SettingsStorage storage = create(ctx);
       RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
       RequestParameter body = params.body();
       Entry entry = body.getJsonObject().mapTo(Entry.class);
@@ -176,7 +172,7 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
       if (!id.equals(entry.getId())) {
         return Future.failedFuture(new UserException("id mismatch"));
       }
-      return configStorage.updateEntry(entry)
+      return storage.updateEntry(entry)
           .map(entity -> {
             ctx.response().setStatusCode(204);
             ctx.response().end();
@@ -188,7 +184,7 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
     }
   }
 
-  Future<Void> deleteSetting(Vertx vertx, RoutingContext ctx) {
+  Future<Void> deleteSetting(RoutingContext ctx) {
     try {
       SettingsStorage configStorage = create(ctx);
       RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
@@ -204,6 +200,24 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
       return Future.failedFuture(e);
     }
   }
+
+  Future<Void> getSettings(RoutingContext ctx) {
+    try {
+      SettingsStorage storage = create(ctx);
+      RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+      RequestParameter queryParameter = params.pathParameter("query");
+      String query = queryParameter != null ? queryParameter.getString() : null;
+      RequestParameter limitParameter = params.pathParameter("limit");
+      int limit = limitParameter != null ? limitParameter.getInteger() : 10;
+      RequestParameter offsetParameter = params.pathParameter("offset");
+      int offset = offsetParameter != null ? offsetParameter.getInteger() : 0;
+      return storage.getEntries(query, offset, limit);
+    } catch (Exception e) {
+      log.error("{}", e.getMessage(), e);
+      return Future.failedFuture(e);
+    }
+  }
+
 
   @Override
   public Future<Void> postInit(Vertx vertx, String tenant, JsonObject tenantAttributes) {

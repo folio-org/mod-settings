@@ -424,4 +424,35 @@ public class MainVerticleTest extends TestBase {
         .statusCode(400)
         .contentType(ContentType.TEXT);
   }
+
+  @Test
+  public void testGetSettings() {
+    JsonObject en = new JsonObject()
+        .put("scope", UUID.randomUUID().toString())
+        .put("value", new JsonObject().put("v", "thevalue"));
+    JsonArray permWrite = new JsonArray().add("settings.global.write." + en.getString("scope"));
+    JsonArray permRead = new JsonArray().add("settings.global.read." + en.getString("scope"));
+    for (int i = 0; i < 15; i++) {
+      en
+          .put("id", UUID.randomUUID().toString())
+          .put("key", "g" + i);
+      RestAssured.given()
+          .header(XOkapiHeaders.TENANT, TENANT_1)
+          .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
+          .contentType(ContentType.JSON)
+          .body(en.encode())
+          .post("/settings/entries")
+          .then()
+          .statusCode(204);
+    }
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.PERMISSIONS, permRead.encode())
+        .contentType(ContentType.JSON)
+        .body(en.encode())
+        .get("/settings/entries")
+        .then()
+        .statusCode(500)
+        .contentType(ContentType.TEXT);
+  }
 }

@@ -8,7 +8,12 @@ import io.vertx.pgclient.PgException;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowIterator;
 import io.vertx.sqlclient.Tuple;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,8 +39,9 @@ public class SettingsStorage {
 
   /**
    * Construct storage request for a user with given okapi permissions.
-   * @param vertx Vert.x handle
-   * @param tenant tenant
+   *
+   * @param vertx       Vert.x handle
+   * @param tenant      tenant
    * @param currentUser UUID of user as it comes from X-Okapi-User-Id
    * @param permissions permissions as it comes from X-Okapi-Permissions
    */
@@ -48,6 +54,7 @@ public class SettingsStorage {
 
   /**
    * Prepares storage for a tenant, AKA tenant init.
+   *
    * @return async result
    */
   public Future<Void> init() {
@@ -66,13 +73,15 @@ public class SettingsStorage {
 
   /**
    * Checks if access is allowed for configurations entry.
-   * @param type read/write value
+   *
+   * @param type        read/write value
    * @param permissions permissions given at runtime
-   * @param entry configurations entry that we check against
+   * @param entry       configurations entry that we check against
    * @param currentUser user as it is given at runtime
    * @return true if access is OK; false otherwise (forbidden)
    */
-  static boolean checkDesiredPermissions(String type, JsonArray permissions, Entry entry,
+  static boolean checkDesiredPermissions(
+      String type, JsonArray permissions, Entry entry,
       UUID currentUser) {
     UUID userId = entry.getUserId();
     if (userId == null) {
@@ -83,6 +92,36 @@ public class SettingsStorage {
     }
     return permissions.contains("settings.owner." + type + "." + entry.getScope())
         && currentUser != null && currentUser.equals(entry.getUserId());
+  }
+
+  static List<String> queryDesiredPermissions(
+      JsonArray permissions, UUID currentUser) {
+    Map<String, Set<String>> ents = new HashMap<>();
+    permissions.forEach(p -> {
+      if (p instanceof String str) {
+        String[] split = str.split("\\.");
+        if (split.length >= 4 && split[0].equals("settings")
+            && "read".equals(split[2])) {
+          String scope = split[3];
+          ents.putIfAbsent(scope, new TreeSet<>());
+          Set<String> rights = ents.get(scope);
+          rights.add(split[1]);
+        }
+      }
+    });
+    List<String> queryLimits = new ArrayList<>();
+    ents.forEach((scope,rights) -> {
+      if (!rights.contains("global") && rights.contains("users")) {
+        queryLimits.add("scope = " + scope + " and userId != \"" + GLOBAL_USER + "\"");
+      } else if (rights.contains("global") && !rights.contains("users")) {
+        queryLimits.add("scope = " + scope + " and userId == \"" + GLOBAL_USER + "\"");
+      } else if (rights.contains("global") && rights.contains("users")) {
+        queryLimits.add("scope = " + scope);
+      } else if (rights.contains("owner")) {
+        queryLimits.add("scope = " + scope + " userId = \"" + currentUser.toString() + "\"");
+      }
+    });
+    return queryLimits;
   }
 
   Entry fromRow(Row row) {
@@ -101,6 +140,7 @@ public class SettingsStorage {
 
   /**
    * Create configurations entry.
+   *
    * @param entry to be created
    * @return async result with success if created; failed otherwise
    */
@@ -127,6 +167,7 @@ public class SettingsStorage {
 
   /**
    * Get configurations entry.
+   *
    * @param id entry identifier
    * @return async result with entry value; failure otherwise
    */
@@ -158,6 +199,7 @@ public class SettingsStorage {
 
   /**
    * Delete configurations entry.
+   *
    * @param id entry identifier
    * @return async result; exception if not found or forbidden
    */
@@ -183,6 +225,7 @@ public class SettingsStorage {
 
   /**
    * Update configurations entry.
+   *
    * @param entry to be created
    * @return async result with success if created; failed otherwise
    */
@@ -215,4 +258,16 @@ public class SettingsStorage {
         .mapEmpty();
   }
 
+  /**
+   * Get entries with optional query.
+   *
+   * @param query  CQL query; null if no query is provided
+   * @param offset starting offset of entries returned
+   * @param limit  maximum number of entries returned
+   * @return async result
+   */
+  public Future<Void> getEntries(String query, int offset, int limit) {
+
+    return Future.failedFuture("not implemented");
+  }
 }
