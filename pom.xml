@@ -351,7 +351,6 @@
           </execution>
         </executions>
       </plugin>
-      <!--
       <plugin>
         <groupId>pl.project13.maven</groupId>
         <artifactId>git-commit-id-plugin</artifactId>
@@ -369,7 +368,6 @@
           <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
         </configuration>
       </plugin>
-      -->
     </plugins>
   </build>
   <repositories>
