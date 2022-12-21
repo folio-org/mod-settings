@@ -104,3 +104,6 @@ Generated [API documentation](https://dev.folio.org/reference/api/#mod-settings)
 
 The built artifacts for this module are available.
 See [configuration](https://dev.folio.org/download/artifacts) for repository access,
+and the Docker images for [released versions](https://hub.docker.com/r/folioorg/mod-settings/)
+and for [snapshot versions](https://hub.docker.com/r/folioci/mod-settings/).
+
