@@ -13,11 +13,11 @@
     },
     "key": {
       "type": "string",
-      "description": "Key within scope for this configuration"
+      "description": "Key within scope for this setting"
     },
     "value": {
       "type": "object",
-      "description": "Configuration value"
+      "description": "Settings value"
     },
     "userId": {
       "type": "string",
