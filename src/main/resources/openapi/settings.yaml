@@ -18,9 +18,9 @@ paths:
         Get settings with optional CQL query.
         If X-Okapi-Permissions includes settings.global.read then settings
         without a userId are returned.
-        If X-Okapi-Permissions includes settings.others.read then settings
+        If X-Okapi-Permissions includes settings.users.read then settings
         with a userId are returned.
-        If X-Okapi-Permissions includes settings.user.read then settings
+        If X-Okapi-Permissions includes settings.owner.read then settings
         with userId = current-user are returned.
       operationId: getSettings
       responses:
@@ -43,9 +43,9 @@ paths:
         Create setting entry.
         If X-Okapi-Permissions includes settings.global.read, then a setting without
         a userId may be created.
-        If X-Okapi-Permissions includes settings.others.read, then a setting with a
+        If X-Okapi-Permissions includes settings.users.read, then a setting with a
         userId may be created.
-        If X-Okapi-Permissions includes settings.user.read, then a setting with
+        If X-Okapi-Permissions includes settings.owner.read, then a setting with
         userId = current-user may be created.
       operationId: postSetting
       requestBody:
@@ -83,9 +83,9 @@ paths:
         Get setting.
         If X-Okapi-Permissions includes settings.global.read, then a setting without
         a userId may be retrieved.
-        If X-Okapi-Permissions includes settings.others.read, then a setting with a
+        If X-Okapi-Permissions includes settings.users.read, then a setting with a
         userId may be retrieved.
-        If X-Okapi-Permissions includes settings.user.read, then a setting with
+        If X-Okapi-Permissions includes settings.owner.read, then a setting with
         userId = current-user may be retrieved.
       operationId: getSetting
       responses:
@@ -108,9 +108,9 @@ paths:
         Update setting.
         If X-Okapi-Permissions includes settings.global.read, then a setting without
         a userId may be updated.
-        If X-Okapi-Permissions includes settings.others.read, then a setting with a
+        If X-Okapi-Permissions includes settings.users.read, then a setting with a
         userId may be updated.
-        If X-Okapi-Permissions includes settings.user.read, then a setting with
+        If X-Okapi-Permissions includes settings.owner.read, then a setting with
         userId = current-user may be updated.
       operationId: putSetting
       requestBody:
@@ -134,9 +134,9 @@ paths:
         Delete setting.
         If X-Okapi-Permissions includes settings.global.read, then a setting without
         a userId may be deleted.
-        If X-Okapi-Permissions includes settings.others.read, then a setting with a
+        If X-Okapi-Permissions includes settings.users.read, then a setting with a
         userId may be deleted.
-        If X-Okapi-Permissions includes settings.user.read, then a setting with
+        If X-Okapi-Permissions includes settings.owner.read, then a setting with
         userId = current-user may be deleted.
       operationId: deleteSetting
       responses:
