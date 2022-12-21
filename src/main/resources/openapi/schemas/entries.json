@@ -1,9 +1,9 @@
 {
-  "description": "Configuration entries response",
+  "description": "Setting entries response",
   "type": "object",
   "properties": {
     "items": {
-      "description": "List of configuration entries",
+      "description": "List of settings",
       "type": "array",
       "items": {
         "type": "object",

@@ -1,6 +1,6 @@
 {
   "id": "${artifactId}-${version}",
-  "name": "config",
+  "name": "settings",
   "provides": [
     {
       "id": "_tenant",
@@ -23,77 +23,77 @@
       ]
     },
     {
-      "id": "config",
+      "id": "settings",
       "version": "1.0",
       "handlers": [
         {
           "methods": [
             "POST"
           ],
-          "pathPattern": "/config/entries",
+          "pathPattern": "/settings/entries",
           "permissionsRequired": [
-            "config.entries.item.post"
+            "settings.entries.item.post"
           ],
           "permissionsDesired": [
-            "config.global.write.*",
-            "config.user.write.*",
-            "config.others.write.*"
+            "settings.global.write.*",
+            "settings.users.write.*",
+            "settings.owner.write.*"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/config/entries",
+          "pathPattern": "/settings/entries",
           "permissionsRequired": [
-            "config.entries.collection.get"
+            "settings.entries.collection.get"
           ],
           "permissionsDesired": [
-            "config.global.read.*",
-            "config.user.read.*",
-            "config.others.read.*"
+            "settings.global.read.*",
+            "settings.users.read.*",
+            "settings.owner.read.*"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/config/entries/{id}",
+          "pathPattern": "/settings/entries/{id}",
           "permissionsRequired": [
-            "config.entries.item.get"
+            "settings.entries.item.get"
           ],
           "permissionsDesired": [
-            "config.global.read.*",
-            "config.user.read.*",
-            "config.others.read.*"
+            "settings.global.read.*",
+            "settings.users.read.*",
+            "settings.owner.read.*"
           ]
         },
         {
           "methods": [
             "PUT"
           ],
-          "pathPattern": "/config/entries/{id}",
+          "pathPattern": "/settings/entries/{id}",
           "permissionsRequired": [
-            "config.entries.item.put"
+            "settings.entries.item.put"
           ],
           "permissionsDesired": [
-            "config.global.write.*",
-            "config.user.write.*",
-            "config.others.write.*"
+            "settings.global.write.*",
+            "settings.users.write.*",
+            "settings.owner.write.*"
           ]
         },
         {
           "methods": [
             "DELETE"
           ],
-          "pathPattern": "/config/entries/{id}",
+          "pathPattern": "/settings/entries/{id}",
           "permissionsRequired": [
-            "config.entries.item.delete"
+            "settings.entries.item.delete"
           ],
           "permissionsDesired": [
-            "config.global.write.*",
-            "config.user.write.*",
-            "config.others.write.*"
+            "settings.global.write.*",
+            "settings.users.write.*",
+            "settings.owner.write.*"
           ]
         }
       ]
@@ -102,40 +102,40 @@
   "requires": [],
   "permissionSets": [
     {
-      "permissionName": "config.entries.item.post",
-      "displayName": "config - create configuration entry",
-      "description": "Create configuration entry"
+      "permissionName": "settings.entries.item.post",
+      "displayName": "settings - create setting",
+      "description": "Create setting"
     },
     {
-      "permissionName": "config.entries.collection.get",
-      "displayName": "config - get configuration entries",
-      "description": "Get configuration entries"
+      "permissionName": "settings.entries.collection.get",
+      "displayName": "settings - get settings",
+      "description": "Get settings"
     },
     {
-      "permissionName": "config.entries.item.get",
-      "displayName": "config - get configuration entry",
-      "description": "Get configuration entry"
+      "permissionName": "settings.entries.item.get",
+      "displayName": "settings - get setting",
+      "description": "Get setting"
     },
     {
-      "permissionName": "config.entries.item.put",
-      "displayName": "config - update configuration entry",
-      "description": "Update configuration entry"
+      "permissionName": "settings.entries.item.put",
+      "displayName": "settings - update setting",
+      "description": "Update setting"
     },
     {
-      "permissionName": "config.entries.item.delete",
-      "displayName": "config - delete configuration entry",
-      "description": "Deletee configuration entry"
+      "permissionName": "settings.entries.item.delete",
+      "displayName": "settings - delete setting",
+      "description": "Delete setting"
     },
     {
-      "permissionName": "config.entries.all",
-      "displayName": "config - All configuration permissions",
-      "description": "All configuration permissions",
+      "permissionName": "settings.entries.all",
+      "displayName": "settings - all setting permissions",
+      "description": "All setting permissions",
       "subPermissions": [
-        "config.entries.item.post",
-        "config.entries.collection.get",
-        "config.entries.item.get",
-        "config.entries.item.put",
-        "config.entries.item.delete"
+        "settings.entries.item.post",
+        "settings.entries.collection.get",
+        "settings.entries.item.get",
+        "settings.entries.item.put",
+        "settings.entries.item.delete"
       ]
     }
   ],

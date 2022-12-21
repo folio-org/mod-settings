@@ -1,5 +1,5 @@
 {
-  "description": "Configuration entry",
+  "description": "Setting",
   "type": "object",
   "properties": {
     "id": {
@@ -22,7 +22,7 @@
     "userId": {
       "type": "string",
       "format": "uuid",
-      "description": "Owner of this configuration entry (optional)"
+      "description": "Owner of this setting (optional)"
     }
   },
   "additionalProperties": false,

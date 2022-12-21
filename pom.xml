@@ -1,22 +1,22 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
-  <artifactId>mod-config</artifactId>
+  <artifactId>mod-settings</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>Reservoir</name>
-  <url>https://github.com/folio-org/mod-config</url>
-  <description>Configuratation module</description>
+  <url>https://github.com/folio-org/mod-settings</url>
+  <description>Settings module</description>
   <inceptionYear>2021</inceptionYear>
   <organization>
     <name>The Open Library Foundation</name>
     <url>https://dev.folio.org/</url>
   </organization>
   <scm>
-    <url>https://github.com/folio-org/mod-config</url>
-    <connection>scm:git:git://github.com/folio-org/mod-config.git</connection>
-    <developerConnection>scm:git:git@github.com:folio-org/mod-config.git</developerConnection>
+    <url>https://github.com/folio-org/mod-settings</url>
+    <connection>scm:git:git://github.com/folio-org/mod-settings.git</connection>
+    <developerConnection>scm:git:git@github.com:folio-org/mod-settings.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
 
@@ -33,7 +33,7 @@
     <okapi.version>4.14.5</okapi.version>
     <vertxlib.version>2.1.0-SNAPSHOT</vertxlib.version>
     <vertx.launcher>io.vertx.core.Launcher</vertx.launcher>
-    <vertx.verticle>org.folio.config.server.main.MainVerticle</vertx.verticle>
+    <vertx.verticle>org.folio.settings.server.main.MainVerticle</vertx.verticle>
   </properties>
 
   <dependencies>
@@ -404,6 +404,6 @@
 
   <issueManagement>
     <system>JIRA</system>
-    <url>https://issues.folio.org/browse/MODCFG</url>
+    <url>https://issues.folio.org/browse/MODSETTINGS</url>
   </issueManagement>
 </project>
