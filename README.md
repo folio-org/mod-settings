@@ -42,12 +42,12 @@ variables:
 Once configured, start the module with:
 
 ```
-java -Dport=8081-jar target/mod-settings-fat.jar
+java -Dport=8081 -jar target/mod-settings-fat.jar
 ```
 
 ## Running with Docker
 
-If you feel adventurous and want to run Reservoir in a docker container, build the container first:
+If you feel adventurous and want to run mod-settings in a docker container, build the container first:
 
 ```
 docker build -t mod-settings:latest .
@@ -104,3 +104,6 @@ Generated [API documentation](https://dev.folio.org/reference/api/#mod-settings)
 
 The built artifacts for this module are available.
 See [configuration](https://dev.folio.org/download/artifacts) for repository access,
+and the Docker images for [released versions](https://hub.docker.com/r/folioorg/mod-settings/)
+and for [snapshot versions](https://hub.docker.com/r/folioci/mod-settings/).
+
