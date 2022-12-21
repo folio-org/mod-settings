@@ -19,6 +19,8 @@ import org.apache.logging.log4j.Logger;
 import org.folio.config.server.data.Entry;
 import org.folio.config.server.storage.ConfigStorage;
 import org.folio.config.server.storage.ForbiddenException;
+import org.folio.config.server.storage.NotFoundException;
+import org.folio.config.server.storage.UserException;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.tlib.RouterCreator;
@@ -47,25 +49,49 @@ public class ConfigService implements RouterCreator, TenantInitHooks {
     ctx.response().end(HttpResponseStatus.valueOf(ctx.statusCode()).reasonPhrase());
   }
 
+  void commonError(RoutingContext ctx, Throwable cause) {
+    log.error("commonError class={} {}", cause.getClass(), cause.getMessage());
+    if (cause instanceof ForbiddenException) {
+      HttpResponse.responseError(ctx, 403, cause.getMessage());
+    } else if (cause instanceof NotFoundException) {
+      HttpResponse.responseError(ctx, 404, cause.getMessage());
+    } else if (cause instanceof UserException) {
+      HttpResponse.responseError(ctx, 400, cause.getMessage());
+    } else {
+      HttpResponse.responseError(ctx, 500, cause.getMessage());
+    }
+  }
+
   private void handlers(Vertx vertx, RouterBuilder routerBuilder) {
     routerBuilder
         .operation("getConfigurationEntries")
         .handler(ctx -> getConfigurationEntries(vertx, ctx)
-            .onFailure(cause -> HttpResponse.responseError(ctx, 500, cause.getMessage()))
+            .onFailure(cause -> commonError(ctx, cause))
         )
         .failureHandler(this::failureHandler);
 
     routerBuilder
         .operation("postConfigurationEntry")
         .handler(ctx -> postConfigurationEntry(vertx, ctx)
-            .onFailure(cause -> HttpResponse.responseError(ctx, 500, cause.getMessage()))
+            .onFailure(cause -> commonError(ctx, cause))
         )
         .failureHandler(this::failureHandler);
-
     routerBuilder
         .operation("getConfigurationEntry")
         .handler(ctx -> getConfigurationEntry(vertx, ctx)
-            .onFailure(cause -> HttpResponse.responseError(ctx, 500, cause.getMessage()))
+            .onFailure(cause -> commonError(ctx, cause))
+        )
+        .failureHandler(this::failureHandler);
+    routerBuilder
+        .operation("putConfigurationEntry")
+        .handler(ctx -> updateConfigurationEntry(vertx, ctx)
+            .onFailure(cause -> commonError(ctx, cause))
+        )
+        .failureHandler(this::failureHandler);
+    routerBuilder
+        .operation("deleteConfigurationEntry")
+        .handler(ctx -> deleteConfigurationEntry(vertx, ctx)
+            .onFailure(cause -> commonError(ctx, cause))
         )
         .failureHandler(this::failureHandler);
   }
@@ -131,24 +157,49 @@ public class ConfigService implements RouterCreator, TenantInitHooks {
       String id  = params.pathParameter("id").getString();
       return configStorage.getEntry(UUID.fromString(id))
           .map(entity -> {
-            if (entity == null) {
-              HttpResponse.responseError(ctx, 404, "Not found");
-              return null;
-            }
             HttpResponse.responseJson(ctx, 200)
                     .end(JsonObject.mapFrom(entity).encode());
             return null;
-          })
-          .otherwise(e -> {
-            if (e instanceof ForbiddenException) {
-              HttpResponse.responseError(ctx, 403, "Forbidden");
-              return Future.succeededFuture();
-            } else {
-              HttpResponse.responseError(ctx, 500, e.getMessage());
-              return Future.succeededFuture();
-            }
-          })
-          .mapEmpty();
+          });
+    } catch (Exception e) {
+      log.error("{}", e.getMessage(), e);
+      return Future.failedFuture(e);
+    }
+  }
+
+  Future<Void> updateConfigurationEntry(Vertx vertx, RoutingContext ctx) {
+    try {
+      ConfigStorage configStorage = create(ctx);
+      RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+      RequestParameter body = params.body();
+      Entry entry = body.getJsonObject().mapTo(Entry.class);
+      UUID id  = UUID.fromString(params.pathParameter("id").getString());
+      if (!id.equals(entry.getId())) {
+        return Future.failedFuture(new UserException("id mismatch"));
+      }
+      return configStorage.updateEntry(entry)
+          .map(entity -> {
+            ctx.response().setStatusCode(204);
+            ctx.response().end();
+            return null;
+          });
+    } catch (Exception e) {
+      log.error("{}", e.getMessage(), e);
+      return Future.failedFuture(e);
+    }
+  }
+
+  Future<Void> deleteConfigurationEntry(Vertx vertx, RoutingContext ctx) {
+    try {
+      ConfigStorage configStorage = create(ctx);
+      RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+      String id  = params.pathParameter("id").getString();
+      return configStorage.deleteEntry(UUID.fromString(id))
+          .map(res -> {
+            ctx.response().setStatusCode(204);
+            ctx.response().end();
+            return null;
+          });
     } catch (Exception e) {
       log.error("{}", e.getMessage(), e);
       return Future.failedFuture(e);
