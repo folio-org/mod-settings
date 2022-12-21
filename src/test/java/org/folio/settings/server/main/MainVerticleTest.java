@@ -13,7 +13,10 @@ import org.folio.settings.server.TestBase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 @RunWith(VertxUnitRunner.class)
 public class MainVerticleTest extends TestBase {
@@ -430,29 +433,115 @@ public class MainVerticleTest extends TestBase {
     JsonObject en = new JsonObject()
         .put("scope", UUID.randomUUID().toString())
         .put("value", new JsonObject().put("v", "thevalue"));
-    JsonArray permWrite = new JsonArray().add("settings.global.write." + en.getString("scope"));
-    JsonArray permRead = new JsonArray().add("settings.global.read." + en.getString("scope"));
+    JsonArray permGlobalWrite = new JsonArray().add("settings.global.write." + en.getString("scope"));
+    JsonArray permGlobalRead = new JsonArray().add("settings.global.read." + en.getString("scope"));
     for (int i = 0; i < 15; i++) {
       en
           .put("id", UUID.randomUUID().toString())
           .put("key", "g" + i);
       RestAssured.given()
           .header(XOkapiHeaders.TENANT, TENANT_1)
-          .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
+          .header(XOkapiHeaders.PERMISSIONS, permGlobalWrite.encode())
           .contentType(ContentType.JSON)
           .body(en.encode())
           .post("/settings/entries")
           .then()
           .statusCode(204);
     }
+
+    JsonObject en2 = new JsonObject()
+        .put("scope", en.getString("scope"))
+        .put("value", new JsonObject().put("v", "thevalue"));
+    JsonArray permUsersWrite = new JsonArray().add("settings.users.write." + en.getString("scope"));
+    JsonArray permUsersRead = new JsonArray().add("settings.users.read." + en.getString("scope"));
+    for (int i = 0; i < 3; i++) {
+      en2
+          .put("id", UUID.randomUUID().toString())
+          .put("userId", UUID.randomUUID().toString())
+          .put("key", "k1");
+      RestAssured.given()
+          .header(XOkapiHeaders.TENANT, TENANT_1)
+          .header(XOkapiHeaders.PERMISSIONS, permUsersWrite.encode())
+          .contentType(ContentType.JSON)
+          .body(en2.encode())
+          .post("/settings/entries")
+          .then()
+          .statusCode(204);
+    }
+
+    UUID userId = UUID.randomUUID();
+    JsonObject en3 = new JsonObject()
+        .put("scope", en.getString("scope"))
+        .put("value", new JsonObject().put("v", "thevalue"));
+    JsonArray permOwnerWrite = new JsonArray().add("settings.owner.write." + en.getString("scope"));
+    JsonArray permOwnerRead = new JsonArray().add("settings.owner.read." + en.getString("scope"));
+    for (int i = 0; i < 2; i++) {
+      en3
+          .put("id", UUID.randomUUID().toString())
+          .put("userId", userId)
+          .put("key", "l" + i);
+      RestAssured.given()
+          .header(XOkapiHeaders.TENANT, TENANT_1)
+          .header(XOkapiHeaders.USER_ID, userId.toString())
+          .header(XOkapiHeaders.PERMISSIONS, permOwnerWrite.encode())
+          .contentType(ContentType.JSON)
+          .body(en3.encode())
+          .post("/settings/entries")
+          .then()
+          .statusCode(204);
+    }
+
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
-        .header(XOkapiHeaders.PERMISSIONS, permRead.encode())
+        .header(XOkapiHeaders.PERMISSIONS, permGlobalRead.encode())
         .contentType(ContentType.JSON)
         .body(en.encode())
         .get("/settings/entries")
         .then()
-        .statusCode(500)
-        .contentType(ContentType.TEXT);
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("items", hasSize(10))
+        .body("resultInfo.totalRecords", is(15));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.PERMISSIONS, permUsersRead.encode())
+        .contentType(ContentType.JSON)
+        .body(en.encode())
+        .get("/settings/entries")
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("items", hasSize(5))
+        .body("resultInfo.totalRecords", is(5));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.USER_ID, userId.toString())
+        .header(XOkapiHeaders.PERMISSIONS, permOwnerRead.encode())
+        .contentType(ContentType.JSON)
+        .body(en.encode())
+        .get("/settings/entries")
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("items", hasSize(2))
+        .body("resultInfo.totalRecords", is(2));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.USER_ID, userId.toString())
+        .header(XOkapiHeaders.PERMISSIONS, permOwnerRead.encode())
+        .queryParam("query", "scope=\""
+            + en3.getString("scope") + "\" and key=l1")
+        .contentType(ContentType.JSON)
+        .body(en.encode())
+        .get("/settings/entries")
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("items", hasSize(1))
+        .body("resultInfo.totalRecords", is(1));
+
   }
 }

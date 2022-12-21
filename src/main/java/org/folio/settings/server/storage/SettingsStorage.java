@@ -2,11 +2,15 @@ package org.folio.settings.server.storage;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgException;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowIterator;
+import io.vertx.sqlclient.RowSet;
+import io.vertx.sqlclient.RowStream;
+import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Tuple;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,10 +19,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.settings.server.data.Entry;
+import org.folio.tlib.postgres.PgCqlDefinition;
+import org.folio.tlib.postgres.PgCqlQuery;
 import org.folio.tlib.postgres.TenantPgPool;
+import org.folio.tlib.postgres.cqlfield.PgCqlFieldText;
+import org.folio.tlib.postgres.cqlfield.PgCqlFieldUuid;
 
 public class SettingsStorage {
 
@@ -112,13 +121,16 @@ public class SettingsStorage {
     List<String> queryLimits = new ArrayList<>();
     ents.forEach((scope,rights) -> {
       if (!rights.contains("global") && rights.contains("users")) {
-        queryLimits.add("scope = " + scope + " and userId != \"" + GLOBAL_USER + "\"");
+        queryLimits.add("(scope = \"" + scope + "\" and userId <> \""
+            + GLOBAL_USER + "\")");
       } else if (rights.contains("global") && !rights.contains("users")) {
-        queryLimits.add("scope = " + scope + " and userId == \"" + GLOBAL_USER + "\"");
+        queryLimits.add("(scope = \"" + scope + "\" and userId = \""
+            + GLOBAL_USER + "\")");
       } else if (rights.contains("global") && rights.contains("users")) {
-        queryLimits.add("scope = " + scope);
+        queryLimits.add("scope = \"" + scope + "\"");
       } else if (rights.contains("owner")) {
-        queryLimits.add("scope = " + scope + " userId = \"" + currentUser.toString() + "\"");
+        queryLimits.add("(scope = \"" + scope + "\" and userId = \""
+            + currentUser.toString() + "\")");
       }
     });
     return queryLimits;
@@ -259,15 +271,106 @@ public class SettingsStorage {
   }
 
   /**
-   * Get entries with optional query.
+   * Get entries with optional cqlQuery.
    *
-   * @param query  CQL query; null if no query is provided
+   * @param response HTTP response for result
+   * @param cqlQuery  CQL cqlQuery; null if no cqlQuery is provided
    * @param offset starting offset of entries returned
    * @param limit  maximum number of entries returned
    * @return async result
    */
-  public Future<Void> getEntries(String query, int offset, int limit) {
+  public Future<Void> getEntries(HttpServerResponse response, String cqlQuery,
+      int offset, int limit) {
+    List<String> queryLimits = queryDesiredPermissions(permissions, currentUser);
+    if (queryLimits.isEmpty()) {
+      return Future.failedFuture(new ForbiddenException());
+    }
+    String joinedCql = String.join(" or ", queryLimits);
 
-    return Future.failedFuture("not implemented");
+    PgCqlDefinition definition = PgCqlDefinition.create();
+    definition.addField("id", new PgCqlFieldUuid());
+    definition.addField("scope", new PgCqlFieldText());
+    definition.addField("key", new PgCqlFieldText());
+    definition.addField("userId", new PgCqlFieldUuid());
+
+    PgCqlQuery pgCqlQuery = definition.parse(cqlQuery, joinedCql);
+    String sqlOrderBy = pgCqlQuery.getOrderByClause();
+    String sqlWhere = pgCqlQuery.getWhereClause();
+    String from = settingsTable;
+    if (sqlWhere != null) {
+      from = from + " WHERE " + sqlWhere;
+    }
+    String sqlQuery = "SELECT * FROM " + from
+        + (sqlOrderBy == null ? "" : " ORDER BY " + sqlOrderBy)
+        + " LIMIT " + limit + " OFFSET " + offset;
+
+    String countQuery = "SELECT COUNT(*) FROM " + from;
+    return pool.getConnection()
+        .compose(connection ->
+            streamResult(response, connection, sqlQuery, countQuery)
+                .onFailure(x -> connection.close())
+        );
   }
+
+  Future<Void> streamResult(HttpServerResponse response,
+      SqlConnection connection, String query, String cnt) {
+
+    String property = "items";
+    Tuple tuple = Tuple.tuple();
+    int sqlStreamFetchSize = 100;
+
+    return connection.prepare(query)
+        .compose(pq ->
+            connection.begin().map(tx -> {
+              response.setChunked(true);
+              response.putHeader("Content-Type", "application/json");
+              response.write("{ \"" + property + "\" : [");
+              AtomicBoolean first = new AtomicBoolean(true);
+              RowStream<Row> stream = pq.createStream(sqlStreamFetchSize, tuple);
+              stream.handler(row -> {
+                if (!first.getAndSet(false)) {
+                  response.write(",");
+                }
+                Entry entry = fromRow(row);
+                response.write(JsonObject.mapFrom(entry).encode());
+              });
+              stream.endHandler(end -> {
+                Future<RowSet<Row>> cntFuture = cnt != null
+                    ? connection.preparedQuery(cnt).execute(tuple)
+                    : Future.succeededFuture(null);
+                cntFuture
+                    .onSuccess(cntRes -> resultFooter(response, cntRes, null))
+                    .onFailure(f -> {
+                      log.error(f.getMessage(), f);
+                      resultFooter(response,null, f.getMessage());
+                    })
+                    .eventually(x -> tx.commit().compose(y -> connection.close()));
+              });
+              stream.exceptionHandler(e -> {
+                log.error("stream error {}", e.getMessage(), e);
+                resultFooter(response, null, e.getMessage());
+                tx.commit().compose(y -> connection.close());
+              });
+              return null;
+            })
+        );
+  }
+
+  void resultFooter(HttpServerResponse response, RowSet<Row> rowSet, String diagnostic) {
+    JsonObject resultInfo = new JsonObject();
+    if (rowSet != null) {
+      int pos = 0;
+      Row row = rowSet.iterator().next();
+      int count = row.getInteger(pos);
+      resultInfo.put("totalRecords", count);
+    }
+    JsonArray diagnostics = new JsonArray();
+    if (diagnostic != null) {
+      diagnostics.add(new JsonObject().put("message", diagnostic));
+    }
+    resultInfo.put("diagnostics", diagnostics);
+    response.write("], \"resultInfo\": " + resultInfo.encode() + "}");
+    response.end();
+  }
+
 }

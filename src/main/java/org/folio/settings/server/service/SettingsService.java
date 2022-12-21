@@ -205,13 +205,13 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
     try {
       SettingsStorage storage = create(ctx);
       RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-      RequestParameter queryParameter = params.pathParameter("query");
+      RequestParameter queryParameter = params.queryParameter("query");
       String query = queryParameter != null ? queryParameter.getString() : null;
       RequestParameter limitParameter = params.pathParameter("limit");
       int limit = limitParameter != null ? limitParameter.getInteger() : 10;
       RequestParameter offsetParameter = params.pathParameter("offset");
       int offset = offsetParameter != null ? offsetParameter.getInteger() : 0;
-      return storage.getEntries(query, offset, limit);
+      return storage.getEntries(ctx.response(), query, offset, limit);
     } catch (Exception e) {
       log.error("{}", e.getMessage(), e);
       return Future.failedFuture(e);
