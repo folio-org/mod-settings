@@ -36,7 +36,7 @@ public class MainVerticleTest extends TestBase {
   }
 
   @Test
-  public void testCrudNoUserOk() {
+  public void testCrudGlobalOk() {
     JsonObject en = new JsonObject()
         .put("id", UUID.randomUUID().toString())
         .put("scope", UUID.randomUUID().toString())
@@ -44,6 +44,44 @@ public class MainVerticleTest extends TestBase {
         .put("value", new JsonObject().put("v", "thevalue"));
     JsonArray permRead = new JsonArray().add("settings.global.read." + en.getString("scope"));
     JsonArray permWrite = new JsonArray().add("settings.global.write." + en.getString("scope"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
+        .contentType(ContentType.JSON)
+        .body(en.encode())
+        .post("/settings/entries")
+        .then()
+        .statusCode(204);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.PERMISSIONS, permRead.encode())
+        .get("/settings/entries/" + en.getString("id"))
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body(is(en.encode()));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
+        .delete("/settings/entries/" + en.getString("id"))
+        .then()
+        .statusCode(204);
+  }
+
+  @Test
+  public void testCrudUsersOk() {
+    JsonObject en = new JsonObject()
+        .put("id", UUID.randomUUID().toString())
+        .put("scope", UUID.randomUUID().toString())
+        .put("key", "k1")
+        .put("userId", UUID.randomUUID().toString())
+        .put("value", new JsonObject().put("v", "thevalue"));
+
+    JsonArray permRead = new JsonArray().add("settings.users.read." + en.getString("scope"));
+    JsonArray permWrite = new JsonArray().add("settings.users.write." + en.getString("scope"));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -169,14 +207,14 @@ public class MainVerticleTest extends TestBase {
         .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
         .get("/settings/entries/" + en.getString("id"))
         .then()
-        .statusCode(403);
+        .statusCode(404);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header(XOkapiHeaders.PERMISSIONS, permRead.encode())
         .delete("/settings/entries/" + en.getString("id"))
         .then()
-        .statusCode(403);
+        .statusCode(404);
   }
 
   @Test
@@ -208,7 +246,7 @@ public class MainVerticleTest extends TestBase {
         .body(en.encode())
         .put("/settings/entries/" + en.getString("id"))
         .then()
-        .statusCode(400); // ought to be 404, but 400 "includes" that
+        .statusCode(404);
   }
 
   @Test
@@ -241,7 +279,7 @@ public class MainVerticleTest extends TestBase {
         .body(en2.encode())
         .post("/settings/entries")
         .then()
-        .statusCode(400)
+        .statusCode(403)
         .contentType(ContentType.TEXT);
 
     RestAssured.given()
@@ -293,7 +331,7 @@ public class MainVerticleTest extends TestBase {
         .body(en2.encode())
         .post("/settings/entries")
         .then()
-        .statusCode(400)
+        .statusCode(403)
         .contentType(ContentType.TEXT);
 
     RestAssured.given()
@@ -393,7 +431,7 @@ public class MainVerticleTest extends TestBase {
         .body(en.encode())
         .post("/settings/entries")
         .then()
-        .statusCode(400)
+        .statusCode(403)
         .contentType(ContentType.TEXT);
 
     RestAssured.given()
@@ -491,8 +529,38 @@ public class MainVerticleTest extends TestBase {
         .body(en3.encode())
         .put("/settings/entries/" + en3.getString("id"))
         .then()
-        .statusCode(400)
+        .statusCode(404)
         .contentType(ContentType.TEXT);
+  }
+
+  @Test
+  public void testUpdateWrongOwner() {
+    JsonObject en1 = new JsonObject()
+        .put("id", UUID.randomUUID().toString())
+        .put("scope", UUID.randomUUID().toString())
+        .put("key", "k1")
+        .put("userId", UUID.randomUUID().toString())
+        .put("value", new JsonObject().put("v", "thevalue"));
+
+    JsonArray permWrite = new JsonArray().add("settings.owner.write." + en1.getString("scope"));
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
+        .contentType(ContentType.JSON)
+        .body(en1.encode())
+        .post("/settings/entries")
+        .then()
+        .statusCode(403);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.USER_ID, UUID.randomUUID().toString())
+        .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
+        .contentType(ContentType.JSON)
+        .body(en1.encode())
+        .post("/settings/entries")
+        .then()
+        .statusCode(403);
   }
 
   @Test
@@ -610,5 +678,14 @@ public class MainVerticleTest extends TestBase {
         .body("items", hasSize(1))
         .body("resultInfo.totalRecords", is(1));
 
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.PERMISSIONS, new JsonArray().encode())
+        .contentType(ContentType.JSON)
+        .body(en.encode())
+        .get("/settings/entries")
+        .then()
+        .statusCode(403)
+        .contentType(ContentType.TEXT);
   }
 }
