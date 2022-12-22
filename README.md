@@ -66,7 +66,7 @@ Fetch a particular setting with:
 
 This fetch is protected by permissions. If the client does not
 have permission to read the setting with the scope, it will return
-a 403 or 404 failure.
+a 404 failure.
 
 To get a list settings, use:
 
