@@ -655,7 +655,7 @@ public class MainVerticleTest extends TestBase {
         .body(en.encode())
         .get("/settings/entries")
         .then()
-        .statusCode(40)
+        .statusCode(403)
         .contentType(ContentType.TEXT);
   }
 }
