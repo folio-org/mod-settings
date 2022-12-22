@@ -57,7 +57,8 @@ Create a setting with:
 
     POST /config/entries
 
-This is write operation and returns 204 if successful.
+This is write operation and returns 204 if successful. The
+`id` property is required and must be supplied by the client.
 
 Fetch a particular setting with:
 
