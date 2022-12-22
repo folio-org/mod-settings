@@ -534,6 +534,27 @@ public class MainVerticleTest extends TestBase {
   }
 
   @Test
+  public void testUpdateWrongOwner() {
+    JsonObject en1 = new JsonObject()
+        .put("id", UUID.randomUUID().toString())
+        .put("scope", UUID.randomUUID().toString())
+        .put("key", "k1")
+        .put("userId", UUID.randomUUID().toString())
+        .put("value", new JsonObject().put("v", "thevalue"));
+
+    JsonArray permWrite = new JsonArray().add("settings.owner.write." + en1.getString("scope"));
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.USER_ID, UUID.randomUUID().toString())
+        .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
+        .contentType(ContentType.JSON)
+        .body(en1.encode())
+        .post("/settings/entries")
+        .then()
+        .statusCode(403);
+  }
+
+  @Test
   public void testGetSettings() {
     JsonObject en = new JsonObject()
         .put("scope", UUID.randomUUID().toString())
