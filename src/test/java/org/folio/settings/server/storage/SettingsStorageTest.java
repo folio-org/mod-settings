@@ -31,7 +31,7 @@ public class SettingsStorageTest {
         .add("settings.global.write.s1")
         .add("settings.global.read.s1");
     assertThat(SettingsStorage.getSqlLimitFromPermissions(perms, null),
-        contains("(scope = \"s1\" and userId = \"0b29326a-e58d-4566-b8d6-5edbffcb8cdf\")"));
+        contains("(scope = \"s1\" and userId <> \"\")"));
   }
 
   @Test
@@ -39,7 +39,7 @@ public class SettingsStorageTest {
     JsonArray perms = new JsonArray()
         .add("settings.users.read.s1");
     assertThat(SettingsStorage.getSqlLimitFromPermissions(perms, null),
-        contains("(scope = \"s1\" and userId <> \"0b29326a-e58d-4566-b8d6-5edbffcb8cdf\")"));
+        contains("(scope = \"s1\" and userId = \"\")"));
   }
 
   @Test
@@ -61,7 +61,7 @@ public class SettingsStorageTest {
     assertThat(SettingsStorage.getSqlLimitFromPermissions(perms, myId),
         containsInAnyOrder(
             "(scope = \"s1\" and userId = \"" + myId + "\")",
-            "(scope = \"s2\" and userId = \"0b29326a-e58d-4566-b8d6-5edbffcb8cdf\")"
+            "(scope = \"s2\" and userId <> \"\")"
         ));
   }
 }
