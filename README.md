@@ -76,7 +76,7 @@ The latter takes optional `query`, `limit`, `offset` parameters.
 Query is expressed in CQL and supports queries on the `id`, `scope`,
 `key` and `userId` fields. Query terms can mostly only be used in
 exact-value matching: the exception is that the key field supports
-left-anchored searches, e.g. `scope=foo and key=bar*` to find all
+right-truncated searches, e.g. `scope=foo and key=bar*` to find all
 entries in the `foo` scope that begin with `bar`.
 
 The GET operations are "read" operations. The entries returned
