@@ -51,6 +51,9 @@ With 'read' in this contexts we mean able to read the content of
 the setting. With 'write' in this context we modify storage
 using POST, PUT and DELETE.
 
+We expect that most users will have read-write permission on their own
+settings, and read-only permission on global entries.
+
 The API is CRUD-like, but with some important changes for some.
 
 Create a setting with:
