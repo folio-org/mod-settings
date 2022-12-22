@@ -65,8 +65,9 @@ Fetch a particular setting with:
     GET /config/entries/{id}
 
 This fetch is protected by permissions. If the client does not
-have permission to read the setting with the scope, it will return
-a 404 failure.
+have permission to read the setting with the scope or if the setting
+does not exist, mod-settings will return a 404 failure. It's a
+deliberate choice to not distinguish between these two cases.
 
 To get a list settings, use:
 
