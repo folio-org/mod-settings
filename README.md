@@ -58,14 +58,14 @@ The API is CRUD-like, but with some important changes for some.
 
 Create a setting with:
 
-    POST /config/entries
+    POST /settings/entries
 
 This is write operation and returns 204 if successful. The
 `id` property is required and must be supplied by the client.
 
 Fetch a particular setting with:
 
-    GET /config/entries/{id}
+    GET /settings/entries/{id}
 
 This fetch is protected by permissions. If the client does not
 have permission to read the setting with the scope or if the setting
@@ -74,7 +74,7 @@ deliberate choice to not distinguish between these two cases.
 
 Get a list of settings with:
 
-    GET /config/entries
+    GET /settings/entries
 
 The latter takes optional `query`, `limit`, `offset` parameters.
 Query is expressed in Contextual Query Language ([CQL](https://dev.folio.org/reference/glossary/#cql))
@@ -89,14 +89,14 @@ are limited by client permissions.
 
 Update a setting with:
 
-    PUT /config/entries/{id}
+    PUT /settings/entries/{id}
 
 This returns 204 if the setting was updated. This is strictly "write", i.e.
 does not return the newly modified setting.
 
 Delete a setting with:
 
-    DELETE /config/entries/{id}
+    DELETE /settings/entries/{id}
 
 This is a write operation and returns 204 if the setting was deleted.
 
