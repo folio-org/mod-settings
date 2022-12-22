@@ -102,7 +102,7 @@ public class SettingsStorage {
         && currentUser != null && currentUser.equals(userId);
   }
 
-  static List<String> getSqlLimitFromPermissions(
+  static List<String> getCqlLimitPermissions(
       JsonArray permissions, UUID currentUser) {
     Map<String, Set<String>> scopeMap = new HashMap<>();
     permissions.forEach(p -> {
@@ -119,15 +119,22 @@ public class SettingsStorage {
     });
     List<String> queryLimits = new ArrayList<>();
     scopeMap.forEach((scope,rights) -> {
-      if (!rights.contains("global") && rights.contains("users")) {
-        queryLimits.add("(scope = \"" + scope + "\" and userId = \"\")");
-      } else if (rights.contains("global") && !rights.contains("users")) {
-        queryLimits.add("(scope = \"" + scope + "\" and userId <> \"\")");
-      } else if (rights.contains("global") && rights.contains("users")) {
-        queryLimits.add("scope = \"" + scope + "\"");
-      } else if (rights.contains("owner") && currentUser != null) {
-        queryLimits.add("(scope = \"" + scope + "\" and userId = \""
-            + currentUser + "\")");
+      String scopeEq = "scope = \"" + scope + "\"";
+      if (rights.contains("global")) {
+        if (rights.contains("users")) {
+          queryLimits.add(scopeEq);
+        } else if (rights.contains("owner") && currentUser != null) {
+          queryLimits.add("(" + scopeEq
+              + " and (userId <> \"\" or userId = \"" + currentUser + "\"))");
+        } else {
+          queryLimits.add("(" + scopeEq + " and userId <> \"\")");
+        }
+      } else {
+        if (rights.contains("users")) {
+          queryLimits.add("(" + scopeEq + " and userId = \"\")");
+        } else if (rights.contains("owner") && currentUser != null) {
+          queryLimits.add("(" + scopeEq + " and userId = \"" + currentUser + "\")");
+        }
       }
     });
     return queryLimits;
@@ -257,10 +264,10 @@ public class SettingsStorage {
           return null;
         })
         .recover(e -> {
-          if (e instanceof PgException pgException) {
-            if (pgException.getMessage().contains("(23505)")) {
-              return Future.failedFuture(new NotFoundException());
-            }
+          if (e instanceof PgException pgException
+              && pgException.getMessage().contains("(23505)")) {
+            return Future.failedFuture(new NotFoundException());
+
           }
           return Future.failedFuture(e);
         })
@@ -278,7 +285,7 @@ public class SettingsStorage {
    */
   public Future<Void> getEntries(HttpServerResponse response, String cqlQuery,
       int offset, int limit) {
-    List<String> queryLimits = getSqlLimitFromPermissions(permissions, currentUser);
+    List<String> queryLimits = getCqlLimitPermissions(permissions, currentUser);
     if (queryLimits.isEmpty()) {
       return Future.failedFuture(new NotFoundException());
     }
