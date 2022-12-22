@@ -17,14 +17,14 @@ It is currently implemented with PostgresQL as storage.
 
 A setting consists of these required properties
 
-* id: unique identifier (UUID)
-* scope: like namespace for the setting. This could be module.
-* key: a readable identifier; not necessarily for display
-* value: a JSON object
+* `id`: unique identifier (UUID)
+* `scope`: it is a namespace for the setting. This could be module
+* `key`: a readable identifier; not necessarily for display
+* `value`: a JSON object
 
 And optionally:
 
-* userId: the owner of the setting
+* `userId`: the owner of the setting
 
 We call settings without userId 'global'. global settings must be unique
 for scope and key. Non-global settings must be unique for scope, key
@@ -48,7 +48,8 @@ To read this type of setting, the client must have
 `settings.owner.read.`scope.
 
 With 'read' in this contexts we mean able to read the content of
-the setting. With 'write' in this context we modify storage.
+the setting. With 'write' in this context we modify storage
+using POST, PUT and DELETE.
 
 The API is CRUD-like, but with some important changes for some.
 
@@ -71,7 +72,13 @@ To get a list settings, use:
 
     GET /config/entries
 
-The latter takes optional query, limit, offset query parameters.
+The latter takes optional `query`, `limit`, `offset` parameters.
+Query is expressed in CQL and supports queries on the `id`, `scope`,
+`key` and `userId` fields. Query terms can mostly only be used in
+exact-value matching: the exception is that the key field supports
+left-anchored searches, e.g. `scope=foo and key=bar*` to find all
+entries in the `foo` scope that begin with `bar`.
+
 The GET operations are "read" operations. The entries returned
 is limited by client permissions.
 
@@ -79,7 +86,8 @@ Update a setting with:
 
     PUT /config/entries/{id}
 
-This returns 204 if setting was updated. This is strictly "write".
+This returns 204 if setting was updated. This is strictly "write", ie
+does not return the newly modified setting.
 
 Delete a setting with:
 
