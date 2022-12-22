@@ -89,7 +89,7 @@ public class MainVerticleTest extends TestBase {
         .then()
         .statusCode(400)
         .contentType(ContentType.TEXT)
-        .body(is("tenant missing"));
+        .body(containsString("Missing parameter X-Okapi-Tenant"));
   }
 
   @Test
@@ -103,6 +103,7 @@ public class MainVerticleTest extends TestBase {
 
     RestAssured.given()
         .baseUri(MODULE_URL)  // if not, Okapi will intercept
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
         .contentType(ContentType.JSON)
         .body(en.encode())

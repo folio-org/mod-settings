@@ -108,9 +108,6 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     // get tenant
     RequestParameter tenantParameter = params.headerParameter(XOkapiHeaders.TENANT);
-    if (tenantParameter == null) {
-      throw new UserException("tenant missing");
-    }
     String tenant = tenantParameter.getString();
 
     // get user Id

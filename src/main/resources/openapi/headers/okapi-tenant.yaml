@@ -1,6 +1,6 @@
 in: header
 name: X-Okapi-Tenant
 description: Okapi Tenant
-required: false
+required: true
 schema:
   type: string
