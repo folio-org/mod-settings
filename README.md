@@ -56,14 +56,14 @@ settings, and read-only permission on global entries.
 
 The API is CRUD-like, but with some important changes for some.
 
-Create a setting with:
+Create a setting [with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/postSetting):
 
     POST /settings/entries
 
 This is write operation and returns 204 if successful. The
 `id` property is required and must be supplied by the client.
 
-Fetch a particular setting with:
+Fetch a particular setting [with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/getSetting):
 
     GET /settings/entries/{id}
 
@@ -72,7 +72,7 @@ have permission to read the setting with the scope or if the setting
 does not exist, then mod-settings will return a 404 failure. It is a
 deliberate choice to not distinguish between these two cases.
 
-Get a list of settings with:
+Get a list of settings [with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/getSettings):
 
     GET /settings/entries
 
@@ -87,14 +87,14 @@ entries in the `foo` scope that begin with `bar`.
 The GET operations are "read" operations. The entries returned
 are limited by client permissions.
 
-Update a setting with:
+Update a setting [with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/putSetting):
 
     PUT /settings/entries/{id}
 
 This returns 204 if the setting was updated. This is strictly "write", i.e.
 does not return the newly modified setting.
 
-Delete a setting with:
+Delete a setting [with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/putSetting):
 
     DELETE /settings/entries/{id}
 
