@@ -103,13 +103,13 @@ public class SettingsStorage {
         && currentUser != null && currentUser.equals(entry.getUserId());
   }
 
-  static List<String> queryDesiredPermissions(
+  static List<String> getSqlLimitFromPermissions(
       JsonArray permissions, UUID currentUser) {
     Map<String, Set<String>> ents = new HashMap<>();
     permissions.forEach(p -> {
       if (p instanceof String str) {
         String[] split = str.split("\\.");
-        if (split.length >= 4 && split[0].equals("settings")
+        if (split.length == 4 && split[0].equals("settings")
             && "read".equals(split[2])) {
           String scope = split[3];
           ents.putIfAbsent(scope, new TreeSet<>());
@@ -128,9 +128,9 @@ public class SettingsStorage {
             + GLOBAL_USER + "\")");
       } else if (rights.contains("global") && rights.contains("users")) {
         queryLimits.add("scope = \"" + scope + "\"");
-      } else if (rights.contains("owner")) {
+      } else if (rights.contains("owner") && currentUser != null) {
         queryLimits.add("(scope = \"" + scope + "\" and userId = \""
-            + currentUser.toString() + "\")");
+            + currentUser + "\")");
       }
     });
     return queryLimits;
@@ -281,7 +281,7 @@ public class SettingsStorage {
    */
   public Future<Void> getEntries(HttpServerResponse response, String cqlQuery,
       int offset, int limit) {
-    List<String> queryLimits = queryDesiredPermissions(permissions, currentUser);
+    List<String> queryLimits = getSqlLimitFromPermissions(permissions, currentUser);
     if (queryLimits.isEmpty()) {
       return Future.failedFuture(new ForbiddenException());
     }

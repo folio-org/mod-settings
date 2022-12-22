@@ -51,6 +51,7 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
   }
 
   void commonError(RoutingContext ctx, Throwable cause, int defaultCode) {
+    log.debug("commonError");
     if (cause == null) {
       HttpResponse.responseError(ctx, defaultCode,
           HttpResponseStatus.valueOf(defaultCode).reasonPhrase());
