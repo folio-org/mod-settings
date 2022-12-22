@@ -545,6 +545,15 @@ public class MainVerticleTest extends TestBase {
     JsonArray permWrite = new JsonArray().add("settings.owner.write." + en1.getString("scope"));
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
+        .contentType(ContentType.JSON)
+        .body(en1.encode())
+        .post("/settings/entries")
+        .then()
+        .statusCode(403);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header(XOkapiHeaders.USER_ID, UUID.randomUUID().toString())
         .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
         .contentType(ContentType.JSON)
