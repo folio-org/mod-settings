@@ -35,8 +35,6 @@ public class SettingsStorage {
 
   private static final String CREATE_IF_NO_EXISTS = "CREATE TABLE IF NOT EXISTS ";
 
-  private static final UUID GLOBAL_USER = UUID.fromString("b29326a-e58d-4566-b8d6-5edbffcb8cdf");
-
   private final TenantPgPool pool;
 
   private final String settingsTable;
@@ -73,25 +71,26 @@ public class SettingsStorage {
             + " scope VARCHAR NOT NULL,"
             + " key VARCHAR NOT NULL,"
             + " value JSONB NOT NULL,"
-            + " userId uuid NOT NULL"
+            + " userId uuid"
             + ")",
-        "CREATE UNIQUE INDEX IF NOT EXISTS settings_scope_key_userid ON "
-            + settingsTable + "(scope, key, userId)"
+        "CREATE UNIQUE INDEX IF NOT EXISTS settings_scope_key_users ON "
+            + settingsTable + "(scope, key, userId) WHERE userId is NOT NULL",
+        "CREATE UNIQUE INDEX IF NOT EXISTS settings_scope_key_global ON "
+            + settingsTable + "(scope, key) WHERE userId is NULL"
     ));
   }
 
   /**
-   * Checks if access is allowed for configurations entry.
+   * Checks if access is allowed for setting.
    *
    * @param type        read/write value
    * @param permissions permissions given at runtime
-   * @param entry       configurations entry that we check against
+   * @param entry       setting that we check against
    * @param currentUser user as it is given at runtime
    * @return true if access is OK; false otherwise (forbidden)
    */
-  static boolean checkDesiredPermissions(
-      String type, JsonArray permissions, Entry entry,
-      UUID currentUser) {
+  static boolean checkDesiredPermissions(String type, JsonArray permissions,
+      Entry entry, UUID currentUser) {
     UUID userId = entry.getUserId();
     if (userId == null) {
       return permissions.contains("settings.global." + type + "." + entry.getScope());
@@ -100,37 +99,42 @@ public class SettingsStorage {
       return true;
     }
     return permissions.contains("settings.owner." + type + "." + entry.getScope())
-        && currentUser != null && currentUser.equals(entry.getUserId());
+        && currentUser != null && currentUser.equals(userId);
   }
 
-  static List<String> getSqlLimitFromPermissions(
+  static List<String> getCqlLimitPermissions(
       JsonArray permissions, UUID currentUser) {
-    Map<String, Set<String>> ents = new HashMap<>();
+    Map<String, Set<String>> scopeMap = new HashMap<>();
     permissions.forEach(p -> {
       if (p instanceof String str) {
         String[] split = str.split("\\.");
         if (split.length == 4 && split[0].equals("settings")
             && "read".equals(split[2])) {
           String scope = split[3];
-          ents.putIfAbsent(scope, new TreeSet<>());
-          Set<String> rights = ents.get(scope);
+          scopeMap.putIfAbsent(scope, new TreeSet<>());
+          Set<String> rights = scopeMap.get(scope);
           rights.add(split[1]);
         }
       }
     });
     List<String> queryLimits = new ArrayList<>();
-    ents.forEach((scope,rights) -> {
-      if (!rights.contains("global") && rights.contains("users")) {
-        queryLimits.add("(scope = \"" + scope + "\" and userId <> \""
-            + GLOBAL_USER + "\")");
-      } else if (rights.contains("global") && !rights.contains("users")) {
-        queryLimits.add("(scope = \"" + scope + "\" and userId = \""
-            + GLOBAL_USER + "\")");
-      } else if (rights.contains("global") && rights.contains("users")) {
-        queryLimits.add("scope = \"" + scope + "\"");
-      } else if (rights.contains("owner") && currentUser != null) {
-        queryLimits.add("(scope = \"" + scope + "\" and userId = \""
-            + currentUser + "\")");
+    scopeMap.forEach((scope,rights) -> {
+      String scopeEq = "scope = \"" + scope + "\"";
+      if (rights.contains("global")) {
+        if (rights.contains("users")) {
+          queryLimits.add(scopeEq);
+        } else if (rights.contains("owner") && currentUser != null) {
+          queryLimits.add("(" + scopeEq
+              + " and (userId <> \"\" or userId = \"" + currentUser + "\"))");
+        } else {
+          queryLimits.add("(" + scopeEq + " and userId <> \"\")");
+        }
+      } else {
+        if (rights.contains("users")) {
+          queryLimits.add("(" + scopeEq + " and userId = \"\")");
+        } else if (rights.contains("owner") && currentUser != null) {
+          queryLimits.add("(" + scopeEq + " and userId = \"" + currentUser + "\")");
+        }
       }
     });
     return queryLimits;
@@ -143,10 +147,7 @@ public class SettingsStorage {
     entry.setKey(row.getString("key"));
     JsonObject value = row.getJsonObject("value");
     value.forEach(k -> entry.setValue(k.getKey(), k.getValue()));
-    UUID userId = row.getUUID("userid");
-    if (!userId.equals(GLOBAL_USER)) {
-      entry.setUserId(userId);
-    }
+    entry.setUserId(row.getUUID("userid"));
     return entry;
   }
 
@@ -160,18 +161,21 @@ public class SettingsStorage {
     if (!checkDesiredPermissions("write", permissions, entry, currentUser)) {
       return Future.failedFuture(new ForbiddenException());
     }
+    String constraintWhere = entry.getUserId() != null
+        ? "ON CONFLICT (scope, key, userId) WHERE userId is NOT NULL DO NOTHING"
+        : "ON CONFLICT (scope, key) WHERE userId is NULL DO NOTHING";
     return pool.preparedQuery(
             "INSERT INTO " + settingsTable
                 + " (id, scope, key, value, userId)"
                 + " VALUES ($1, $2, $3, $4, $5)"
-                + " ON CONFLICT (scope, key, userId) DO NOTHING"
+                + constraintWhere
         )
         .execute(Tuple.of(entry.getId(), entry.getScope(),
             entry.getKey(), entry.getValue(),
-            entry.getUserId() != null ? entry.getUserId() : GLOBAL_USER))
+            entry.getUserId()))
         .map(rowSet -> {
           if (rowSet.rowCount() == 0) {
-            throw new UserException("Scope/Key/UserId constraint");
+            throw new ForbiddenException();
           }
           return null;
         });
@@ -190,7 +194,7 @@ public class SettingsStorage {
             throw new NotFoundException();
           }
           if (!checkDesiredPermissions("read", permissions, entry, currentUser)) {
-            throw new ForbiddenException();
+            throw new NotFoundException();
           }
           return entry;
         });
@@ -221,7 +225,7 @@ public class SettingsStorage {
         return Future.failedFuture(new NotFoundException());
       }
       if (!checkDesiredPermissions("write", permissions, entry, currentUser)) {
-        return Future.failedFuture(new ForbiddenException());
+        return Future.failedFuture(new NotFoundException());
       }
       return pool.preparedQuery(
               "DELETE FROM " + settingsTable + " WHERE id = $1")
@@ -252,18 +256,18 @@ public class SettingsStorage {
         )
         .execute(Tuple.of(entry.getId(), entry.getScope(),
             entry.getKey(), entry.getValue(),
-            entry.getUserId() != null ? entry.getUserId() : GLOBAL_USER))
+            entry.getUserId()))
         .map(rowSet -> {
           if (rowSet.rowCount() == 0) {
-            throw new UserException("Scope/Key/UserId constraint");
+            throw new NotFoundException();
           }
           return null;
         })
         .recover(e -> {
-          if (e instanceof PgException pgException) {
-            if (pgException.getMessage().contains("\"settings_scope_key_userid\" (23505)")) {
-              return Future.failedFuture(new UserException("constraint problem"));
-            }
+          if (e instanceof PgException pgException
+              && pgException.getMessage().contains("(23505)")) {
+            return Future.failedFuture(new NotFoundException());
+
           }
           return Future.failedFuture(e);
         })
@@ -281,7 +285,7 @@ public class SettingsStorage {
    */
   public Future<Void> getEntries(HttpServerResponse response, String cqlQuery,
       int offset, int limit) {
-    List<String> queryLimits = getSqlLimitFromPermissions(permissions, currentUser);
+    List<String> queryLimits = getCqlLimitPermissions(permissions, currentUser);
     if (queryLimits.isEmpty()) {
       return Future.failedFuture(new ForbiddenException());
     }
@@ -295,15 +299,12 @@ public class SettingsStorage {
 
     PgCqlQuery pgCqlQuery = definition.parse(cqlQuery, joinedCql);
     String sqlOrderBy = pgCqlQuery.getOrderByClause();
-    String sqlWhere = pgCqlQuery.getWhereClause();
-    String from = settingsTable;
-    if (sqlWhere != null) {
-      from = from + " WHERE " + sqlWhere;
-    }
+    String from = settingsTable + " WHERE" + pgCqlQuery.getWhereClause();
     String sqlQuery = "SELECT * FROM " + from
         + (sqlOrderBy == null ? "" : " ORDER BY " + sqlOrderBy)
         + " LIMIT " + limit + " OFFSET " + offset;
 
+    log.debug("SQL: {}", sqlQuery);
     String countQuery = "SELECT COUNT(*) FROM " + from;
     return pool.getConnection()
         .compose(connection ->
