@@ -33,17 +33,17 @@ and userId.
 Settings are protected by permissions.
 
 In order to write to a global setting, the client must have permission
-`settings.global.write.`scope, where scope what is used in the setting.
+`settings.global.write.`scope, where scope is used in the setting.
 To read this type of setting, the client must have
 `settings.global.read.`scope.
 
 In order to write to a setting with any userId, which we call a user
 setting, the client must have permission `settings.users.write.`scope ,
-where scope what is used in the setting. To read this type of setting,
+where scope is used in the setting. To read this type of setting,
 the client must have `settings.users.read.`scope.
 
 In order to write to user's own setting, the client must have permission
-`settings.owner.write.`scope, where scope what is used in the setting.
+`settings.owner.write.`scope, where scope is used in the setting.
 To read this type of setting, the client must have
 `settings.owner.read.`scope.
 
