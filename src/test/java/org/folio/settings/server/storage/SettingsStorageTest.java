@@ -16,8 +16,11 @@ public class SettingsStorageTest {
   public void getLimitsIgnoredPermissions() {
     JsonArray perms = new JsonArray()
         .add("a")
+        .add(1)
+        .add("other.global.read.scope")
         .add("settings.global.write.scope")
-        .add("settings.global.read.scope.x");
+        .add("settings.global.read.scope.x")
+        .add("settings.others.read.scope");
     assertThat(SettingsStorage.getSqlLimitFromPermissions(perms, null), is(empty()));
   }
 
