@@ -94,7 +94,7 @@ Update a setting [with](https://s3.amazonaws.com/foliodocs/api/mod-settings/sett
 This returns 204 if the setting was updated. This is strictly "write", i.e.
 does not return the newly modified setting.
 
-Delete a setting [with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/putSetting):
+Delete a setting [with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/deleteSetting):
 
     DELETE /settings/entries/{id}
 
