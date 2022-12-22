@@ -10,9 +10,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.settings.server.TestBase;
+import org.folio.settings.server.service.SettingsService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -66,6 +69,69 @@ public class MainVerticleTest extends TestBase {
         .delete("/settings/entries/" + en.getString("id"))
         .then()
         .statusCode(204);
+  }
+
+  @Test
+  public void testPostMissingTenant() {
+    JsonObject en = new JsonObject()
+        .put("id", UUID.randomUUID().toString())
+        .put("scope", UUID.randomUUID().toString())
+        .put("key", "k1")
+        .put("value", new JsonObject().put("v", "thevalue"));
+    JsonArray permWrite = new JsonArray().add("settings.global.write." + en.getString("scope"));
+
+    RestAssured.given()
+        .baseUri(MODULE_URL)  // if not, Okapi will intercept
+        .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
+        .contentType(ContentType.JSON)
+        .body(en.encode())
+        .post("/settings/entries")
+        .then()
+        .statusCode(400)
+        .contentType(ContentType.TEXT)
+        .body(is("tenant missing"));
+  }
+
+  @Test
+  public void testPostInvalidSetting() {
+    JsonObject en = new JsonObject()
+        // id missing
+        .put("scope", UUID.randomUUID().toString())
+        .put("key", "k1")
+        .put("value", new JsonObject().put("v", "thevalue"));
+    JsonArray permWrite = new JsonArray().add("settings.global.write." + en.getString("scope"));
+
+    RestAssured.given()
+        .baseUri(MODULE_URL)  // if not, Okapi will intercept
+        .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
+        .contentType(ContentType.JSON)
+        .body(en.encode())
+        .post("/settings/entries")
+        .then()
+        .statusCode(400)
+        .contentType(ContentType.TEXT)
+        .body(containsString("provided object should contain property id"));
+  }
+
+  @Test
+  public void testPostBodyTooBig() {
+    JsonObject en = new JsonObject()
+        .put("id", UUID.randomUUID().toString())
+        .put("scope", UUID.randomUUID().toString())
+        .put("key", "k1")
+        .put("value", new JsonObject().put("v", "x".repeat(SettingsService.BODY_LIMIT)));
+    JsonArray permWrite = new JsonArray().add("settings.global.write." + en.getString("scope"));
+
+    RestAssured.given()
+        .baseUri(MODULE_URL)  // if not, Okapi will intercept
+        .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
+        .contentType(ContentType.JSON)
+        .body(en.encode())
+        .post("/settings/entries")
+        .then()
+        .statusCode(413)
+        .contentType(ContentType.TEXT)
+        .body(is("Request Entity Too Large"));
   }
 
   @Test
