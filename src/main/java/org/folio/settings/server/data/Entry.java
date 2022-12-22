@@ -59,7 +59,7 @@ public class Entry {
   @JsonIgnore
   public JsonObject getValue() {
     JsonObject ret = new JsonObject();
-    value.forEach((k, v) -> ret.put(k, v));
+    value.forEach(ret::put);
     return ret;
   }
 
