@@ -3,7 +3,6 @@ package org.folio.settings.server.service;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -38,30 +37,36 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
         .map(routerBuilder -> {
           // https://vertx.io/docs/vertx-web/java/#_limiting_body_size
           routerBuilder.rootHandler(BodyHandler.create().setBodyLimit(BODY_LIMIT));
-          handlers(vertx, routerBuilder);
+          handlers(routerBuilder);
           return routerBuilder.createRouter();
         });
   }
 
   private void failureHandler(RoutingContext ctx) {
-    ctx.response().setStatusCode(ctx.statusCode());
-    ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "text/plain");
-    ctx.response().end(HttpResponseStatus.valueOf(ctx.statusCode()).reasonPhrase());
+    commonError(ctx, ctx.failure(), ctx.statusCode());
   }
 
   void commonError(RoutingContext ctx, Throwable cause) {
-    if (cause instanceof ForbiddenException) {
+    commonError(ctx, cause, 500);
+  }
+
+  void commonError(RoutingContext ctx, Throwable cause, int defaultCode) {
+    log.debug("commonError");
+    if (cause == null) {
+      HttpResponse.responseError(ctx, defaultCode,
+          HttpResponseStatus.valueOf(defaultCode).reasonPhrase());
+    } else if (cause instanceof ForbiddenException) {
       HttpResponse.responseError(ctx, 403, cause.getMessage());
     } else if (cause instanceof NotFoundException) {
       HttpResponse.responseError(ctx, 404, cause.getMessage());
     } else if (cause instanceof UserException) {
       HttpResponse.responseError(ctx, 400, cause.getMessage());
     } else {
-      HttpResponse.responseError(ctx, 500, cause.getMessage());
+      HttpResponse.responseError(ctx, defaultCode, cause.getMessage());
     }
   }
 
-  private void handlers(Vertx vertx, RouterBuilder routerBuilder) {
+  private void handlers(RouterBuilder routerBuilder) {
     routerBuilder
         .operation("getSettings")
         .handler(ctx -> getSettings(ctx)
@@ -104,9 +109,6 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     // get tenant
     RequestParameter tenantParameter = params.headerParameter(XOkapiHeaders.TENANT);
-    if (tenantParameter == null) {
-      throw new RuntimeException("tenant required");
-    }
     String tenant = tenantParameter.getString();
 
     // get user Id
@@ -128,96 +130,70 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
   }
 
   Future<Void> postSetting(RoutingContext ctx) {
-    try {
-      SettingsStorage storage = create(ctx);
-      RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-      RequestParameter body = params.body();
-      Entry entry = body.getJsonObject().mapTo(Entry.class);
-      return storage.createEntry(entry)
-          .map(entity -> {
-            ctx.response().setStatusCode(204);
-            ctx.response().end();
-            return null;
-          });
-    } catch (Exception e) {
-      log.error("{}", e.getMessage(), e);
-      return Future.failedFuture(e);
-    }
+    SettingsStorage storage = create(ctx);
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    RequestParameter body = params.body();
+    Entry entry = body.getJsonObject().mapTo(Entry.class);
+    return storage.createEntry(entry)
+        .map(entity -> {
+          ctx.response().setStatusCode(204);
+          ctx.response().end();
+          return null;
+        });
   }
 
   Future<Void> getSetting(RoutingContext ctx) {
-    try {
-      SettingsStorage storage = create(ctx);
-      RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-      String id  = params.pathParameter("id").getString();
-      return storage.getEntry(UUID.fromString(id))
-          .map(entity -> {
-            HttpResponse.responseJson(ctx, 200)
-                    .end(JsonObject.mapFrom(entity).encode());
-            return null;
-          });
-    } catch (Exception e) {
-      log.error("{}", e.getMessage(), e);
-      return Future.failedFuture(e);
-    }
+    SettingsStorage storage = create(ctx);
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    String id  = params.pathParameter("id").getString();
+    return storage.getEntry(UUID.fromString(id))
+        .map(entity -> {
+          HttpResponse.responseJson(ctx, 200)
+              .end(JsonObject.mapFrom(entity).encode());
+          return null;
+        });
   }
 
   Future<Void> updateSetting(RoutingContext ctx) {
-    try {
-      SettingsStorage storage = create(ctx);
-      RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-      RequestParameter body = params.body();
-      Entry entry = body.getJsonObject().mapTo(Entry.class);
-      UUID id  = UUID.fromString(params.pathParameter("id").getString());
-      if (!id.equals(entry.getId())) {
-        return Future.failedFuture(new UserException("id mismatch"));
-      }
-      return storage.updateEntry(entry)
-          .map(entity -> {
-            ctx.response().setStatusCode(204);
-            ctx.response().end();
-            return null;
-          });
-    } catch (Exception e) {
-      log.error("{}", e.getMessage(), e);
-      return Future.failedFuture(e);
+    SettingsStorage storage = create(ctx);
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    RequestParameter body = params.body();
+    Entry entry = body.getJsonObject().mapTo(Entry.class);
+    UUID id  = UUID.fromString(params.pathParameter("id").getString());
+    if (!id.equals(entry.getId())) {
+      return Future.failedFuture(new UserException("id mismatch"));
     }
+    return storage.updateEntry(entry)
+        .map(entity -> {
+          ctx.response().setStatusCode(204);
+          ctx.response().end();
+          return null;
+        });
   }
 
   Future<Void> deleteSetting(RoutingContext ctx) {
-    try {
-      SettingsStorage configStorage = create(ctx);
-      RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-      String id  = params.pathParameter("id").getString();
-      return configStorage.deleteEntry(UUID.fromString(id))
-          .map(res -> {
-            ctx.response().setStatusCode(204);
-            ctx.response().end();
-            return null;
-          });
-    } catch (Exception e) {
-      log.error("{}", e.getMessage(), e);
-      return Future.failedFuture(e);
-    }
+    SettingsStorage configStorage = create(ctx);
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    String id  = params.pathParameter("id").getString();
+    return configStorage.deleteEntry(UUID.fromString(id))
+        .map(res -> {
+          ctx.response().setStatusCode(204);
+          ctx.response().end();
+          return null;
+        });
   }
 
   Future<Void> getSettings(RoutingContext ctx) {
-    try {
-      SettingsStorage storage = create(ctx);
-      RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-      RequestParameter queryParameter = params.queryParameter("query");
-      String query = queryParameter != null ? queryParameter.getString() : null;
-      RequestParameter limitParameter = params.pathParameter("limit");
-      int limit = limitParameter != null ? limitParameter.getInteger() : 10;
-      RequestParameter offsetParameter = params.pathParameter("offset");
-      int offset = offsetParameter != null ? offsetParameter.getInteger() : 0;
-      return storage.getEntries(ctx.response(), query, offset, limit);
-    } catch (Exception e) {
-      log.error("{}", e.getMessage(), e);
-      return Future.failedFuture(e);
-    }
+    SettingsStorage storage = create(ctx);
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    RequestParameter queryParameter = params.queryParameter("query");
+    String query = queryParameter != null ? queryParameter.getString() : null;
+    RequestParameter limitParameter = params.pathParameter("limit");
+    int limit = limitParameter != null ? limitParameter.getInteger() : 10;
+    RequestParameter offsetParameter = params.pathParameter("offset");
+    int offset = offsetParameter != null ? offsetParameter.getInteger() : 0;
+    return storage.getEntries(ctx.response(), query, offset, limit);
   }
-
 
   @Override
   public Future<Void> postInit(Vertx vertx, String tenant, JsonObject tenantAttributes) {
