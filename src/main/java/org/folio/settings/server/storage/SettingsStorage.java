@@ -287,7 +287,7 @@ public class SettingsStorage {
       int offset, int limit) {
     List<String> queryLimits = getCqlLimitPermissions(permissions, currentUser);
     if (queryLimits.isEmpty()) {
-      return Future.failedFuture(new NotFoundException());
+      return Future.failedFuture(new ForbiddenException());
     }
     String joinedCql = String.join(" or ", queryLimits);
 
@@ -299,11 +299,7 @@ public class SettingsStorage {
 
     PgCqlQuery pgCqlQuery = definition.parse(cqlQuery, joinedCql);
     String sqlOrderBy = pgCqlQuery.getOrderByClause();
-    String sqlWhere = pgCqlQuery.getWhereClause();
-    String from = settingsTable;
-    if (sqlWhere != null) {
-      from = from + " WHERE " + sqlWhere;
-    }
+    String from = settingsTable + " WHERE" + pgCqlQuery.getWhereClause();
     String sqlQuery = "SELECT * FROM " + from
         + (sqlOrderBy == null ? "" : " ORDER BY " + sqlOrderBy)
         + " LIMIT " + limit + " OFFSET " + offset;

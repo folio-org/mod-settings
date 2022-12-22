@@ -648,5 +648,14 @@ public class MainVerticleTest extends TestBase {
         .body("items", hasSize(1))
         .body("resultInfo.totalRecords", is(1));
 
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.PERMISSIONS, new JsonArray().encode())
+        .contentType(ContentType.JSON)
+        .body(en.encode())
+        .get("/settings/entries")
+        .then()
+        .statusCode(40)
+        .contentType(ContentType.TEXT);
   }
 }

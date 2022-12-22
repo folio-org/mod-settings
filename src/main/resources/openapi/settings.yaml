@@ -95,6 +95,8 @@ paths:
                 $ref: schemas/entry.json
         "400":
           $ref: "#/components/responses/trait_400"
+        "403":
+          $ref: "#/components/responses/trait_403"
         "404":
           $ref: "#/components/responses/trait_404"
         "500":

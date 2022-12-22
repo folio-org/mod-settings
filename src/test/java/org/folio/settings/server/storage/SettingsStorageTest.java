@@ -79,4 +79,13 @@ public class SettingsStorageTest {
             "(scope = \"s1\" and userId <> \"\")"));
   }
 
+  @Test
+  public void getLimitsMix3() {
+    JsonArray perms = new JsonArray()
+        .add("settings.users.read.s1")
+        .add("settings.global.read.s1");
+    assertThat(SettingsStorage.getCqlLimitPermissions(perms, null),
+        contains("scope = \"s1\""));
+  }
+
 }
