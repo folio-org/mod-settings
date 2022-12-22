@@ -7,9 +7,8 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 ## Introduction
 
-mod-settings is a key-value store. It is an attempt to
-make a more secure configuration system than what is
-available today in FOLIO.
+mod-settings is a key-value store that provides a more secure
+configuration system than the old mod-configuration.
 
 See [Fixing the security problem in mod-configuration](https://github.com/MikeTaylor/folio-docs/blob/main/doc/fixing-mod-configuration.md)
 for more information.
