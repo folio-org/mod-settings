@@ -7,6 +7,98 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 ## Introduction
 
+mod-settings is a key-value store that provides a more secure
+configuration system than the old mod-configuration.
+
+See [Fixing the security problem in mod-configuration](https://github.com/MikeTaylor/folio-docs/blob/main/doc/fixing-mod-configuration.md)
+for more information.
+
+It is currently implemented with PostgresQL as storage.
+
+A setting consists of these required properties
+
+* `id`: unique identifier (UUID)
+* `scope`: it is a namespace for the setting. This could be module
+* `key`: a readable identifier; not necessarily for display
+* `value`: a JSON object
+
+And optionally:
+
+* `userId`: the owner of the setting
+
+We call settings without userId 'global'. global settings must be unique
+for scope and key. Non-global settings must be unique for scope, key
+and userId.
+
+Settings are protected by permissions.
+
+In order to write to a global setting, the client must have permission
+`settings.global.write.`scope, where scope what is used in the setting.
+To read this type of setting, the client must have
+`settings.global.read.`scope.
+
+In order to write to a setting with any userId, which we call a user
+setting, the client must have permission `settings.users.write.`scope ,
+where scope what is used in the setting. To read this type of setting,
+the client must have `settings.users.read.`scope.
+
+In order to write to user's own setting, the client must have permission
+`settings.owner.write.`scope, where scope what is used in the setting.
+To read this type of setting, the client must have
+`settings.owner.read.`scope.
+
+With 'read' in this contexts we mean able to read the content of
+the setting. With 'write' in this context we modify storage
+using POST, PUT and DELETE.
+
+We expect that most users will have read-write permission on their own
+settings, and read-only permission on global entries.
+
+The API is CRUD-like, but with some important changes for some.
+
+Create a setting with:
+
+    POST /config/entries
+
+This is write operation and returns 204 if successful. The
+`id` property is required and must be supplied by the client.
+
+Fetch a particular setting with:
+
+    GET /config/entries/{id}
+
+This fetch is protected by permissions. If the client does not
+have permission to read the setting with the scope or if the setting
+does not exist, mod-settings will return a 404 failure. It's a
+deliberate choice to not distinguish between these two cases.
+
+To get a list settings, use:
+
+    GET /config/entries
+
+The latter takes optional `query`, `limit`, `offset` parameters.
+Query is expressed in CQL and supports queries on the `id`, `scope`,
+`key` and `userId` fields. Query terms can mostly only be used in
+exact-value matching: the exception is that the key field supports
+right-truncated searches, e.g. `scope=foo and key=bar*` to find all
+entries in the `foo` scope that begin with `bar`.
+
+The GET operations are "read" operations. The entries returned
+is limited by client permissions.
+
+Update a setting with:
+
+    PUT /config/entries/{id}
+
+This returns 204 if setting was updated. This is strictly "write", ie
+does not return the newly modified setting.
+
+Delete a setting with:
+
+    DELETE /config/entries/{id}
+
+This is a write operation and returns 204 if setting was deleted.
+
 ## Compilation
 
 Requirements:
@@ -74,7 +166,7 @@ If it's not defined you can specify it by passing
 
 ### Issue tracker
 
-See project [MODSETTINGS](https://issues.folio.org/browse/MODSETTINGS)
+See project [MODSET](https://issues.folio.org/browse/MODSET)
 at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker).
 
 ### Code of Conduct
