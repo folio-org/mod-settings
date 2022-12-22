@@ -74,7 +74,7 @@ If it's not defined you can specify it by passing
 
 ### Issue tracker
 
-See project [MODSETTINGS](https://issues.folio.org/browse/MODSETTINGS)
+See project [MODSET](https://issues.folio.org/browse/MODSET)
 at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker).
 
 ### Code of Conduct
