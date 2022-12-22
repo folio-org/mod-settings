@@ -44,8 +44,8 @@ where scope what is used in the setting. To read this type of setting,
 the client must have 'settings.users.read.'scope.
 
 In order to write to user's own setting, the client must have permission
-'settings.own.write.'scope, where scope what is used in the setting.
-To read this type of setting, the client must have 'settings.own.read.'scope.
+'settings.owner.write.'scope, where scope what is used in the setting.
+To read this type of setting, the client must have 'settings.owner.read.'scope.
 
 With 'read' in this contexts we mean able to read the content of
 the setting. With 'write' in this context we modify storage.
