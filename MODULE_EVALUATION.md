@@ -22,9 +22,9 @@ When performing a technical evaluation of a module, create a copy of this docume
 * [x] Module is written in a language and framework from the [officially approved technologies](https://wiki.folio.org/display/TC/Officially+Supported+Technologies) page
 * [x] Module only uses FOLIO interfaces already provided by previously accepted modules _e.g. a UI module cannot be accepted that relies on an interface only provided by a back end module that hasn't been accepted yet_
 * [x] Module gracefully handles the absence of third party systems or related configuration
-* [ ] Sonarqube hasn't identified any security issues, major code smells or excessive (>3%) duplication
+* [x] Sonarqube hasn't identified any security issues, major code smells or excessive (>3%) duplication
 * [x] Uses [officially supported](https://wiki.folio.org/display/TC/Officially+Supported+Technologies) build tools
-* [ ] Unit tests have 80% coverage or greater, and are based on [officially approved technologies](https://wiki.folio.org/display/TC/Officially+Supported+Technologies)
+* [x] Unit tests have 80% coverage or greater, and are based on [officially approved technologies](https://wiki.folio.org/display/TC/Officially+Supported+Technologies)
 
 ## Backend
 * [x] Module's repository includes a compliant Module Descriptor
@@ -35,7 +35,7 @@ When performing a technical evaluation of a module, create a copy of this docume
 * [x] All API endpoints are documented in RAML or OpenAPI
 * [x] All API endpoints protected with appropriate permissions as per the following guidelines and recommendations, e.g. avoid using `*.all` permissions, all necessary module permissions are assigned, etc.
   * -_note: read more at https://dev.folio.org/guidelines/naming-conventions/ and https://wiki.folio.org/display/DD/Permission+Set+Guidelines_
-* [ ] Module provides reference data (if applicable), e.g. if there is a controlled vocabulary where the module requires at least one value
+* [x] Module provides reference data (if applicable), e.g. if there is a controlled vocabulary where the module requires at least one value
 * [ ] If provided, integration (API) tests must be written in an [officially approved technology](https://wiki.folio.org/display/TC/Officially+Supported+Technologies)
   * -_note: while it's strongly recommended that modules implement integration tests, it's not a requirement_
   * -_note: these tests are defined in https://github.com/folio-org/folio-integration-tests_
@@ -44,7 +44,7 @@ When performing a technical evaluation of a module, create a copy of this docume
 * [x] The module responds with a tenant's content based on x-okapi-tenant header
 * [x] Standard GET `/admin/health` endpoint returning a 200 response
   * -_note: read more at https://wiki.folio.org/display/DD/Back+End+Module+Health+Check+Protocol_
-* [ ] High Availability (HA) compliant
+* [x] High Availability (HA) compliant
   * Possible red flags:
     * Connection affinity / sticky sessions / etc. are used
     * Local container storage is used
