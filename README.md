@@ -26,7 +26,7 @@ And optionally:
 
 * `userId`: the owner of the setting
 
-We call settings without userId 'global'. global settings must be unique
+We call settings without userId 'global'. Global settings must be unique
 for scope and key. Non-global settings must be unique for scope, key
 and userId.
 
@@ -47,7 +47,7 @@ In order to write to user's own setting, the client must have permission
 To read this type of setting, the client must have
 `settings.owner.read.`scope.
 
-With 'read' in this contexts we mean able to read the content of
+With 'read' in this context we mean able to read the content of
 the setting. With 'write' in this context we modify storage
 using POST, PUT and DELETE.
 
@@ -56,48 +56,49 @@ settings, and read-only permission on global entries.
 
 The API is CRUD-like, but with some important changes for some.
 
-Create a setting with:
+Create a setting [with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/postSetting):
 
-    POST /config/entries
+    POST /settings/entries
 
 This is write operation and returns 204 if successful. The
 `id` property is required and must be supplied by the client.
 
-Fetch a particular setting with:
+Fetch a particular setting [with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/getSetting):
 
-    GET /config/entries/{id}
+    GET /settings/entries/{id}
 
 This fetch is protected by permissions. If the client does not
 have permission to read the setting with the scope or if the setting
-does not exist, mod-settings will return a 404 failure. It's a
+does not exist, then mod-settings will return a 404 failure. It is a
 deliberate choice to not distinguish between these two cases.
 
-To get a list settings, use:
+Get a list of settings [with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/getSettings):
 
-    GET /config/entries
+    GET /settings/entries
 
 The latter takes optional `query`, `limit`, `offset` parameters.
-Query is expressed in CQL and supports queries on the `id`, `scope`,
+Query is expressed in Contextual Query Language ([CQL](https://dev.folio.org/reference/glossary/#cql))
+and supports queries on the `id`, `scope`,
 `key` and `userId` fields. Query terms can mostly only be used in
 exact-value matching: the exception is that the key field supports
 right-truncated searches, e.g. `scope=foo and key=bar*` to find all
 entries in the `foo` scope that begin with `bar`.
 
 The GET operations are "read" operations. The entries returned
-is limited by client permissions.
+are limited by client permissions.
 
-Update a setting with:
+Update a setting [with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/putSetting):
 
-    PUT /config/entries/{id}
+    PUT /settings/entries/{id}
 
-This returns 204 if setting was updated. This is strictly "write", ie
+This returns 204 if the setting was updated. This is strictly "write", i.e.
 does not return the newly modified setting.
 
-Delete a setting with:
+Delete a setting [with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/deleteSetting):
 
-    DELETE /config/entries/{id}
+    DELETE /settings/entries/{id}
 
-This is a write operation and returns 204 if setting was deleted.
+This is a write operation and returns 204 if the setting was deleted.
 
 ## Compilation
 
