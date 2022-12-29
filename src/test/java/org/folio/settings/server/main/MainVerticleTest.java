@@ -736,6 +736,28 @@ public class MainVerticleTest extends TestBase {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header(XOkapiHeaders.USER_ID, userId.toString())
+        .contentType(ContentType.JSON)
+        .body(ar.encode())
+        .put("/settings/upload")
+        .then()
+        .statusCode(403)
+        .contentType(ContentType.TEXT)
+        .body(is("Forbidden"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.PERMISSIONS, permissionsLacking.encode())
+        .contentType(ContentType.JSON)
+        .body(ar.encode())
+        .put("/settings/upload")
+        .then()
+        .statusCode(403)
+        .contentType(ContentType.TEXT)
+        .body(is("Forbidden"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.USER_ID, userId.toString())
         .header(XOkapiHeaders.PERMISSIONS, permOwnerWrite.encode())
         .contentType(ContentType.TEXT)
         .body("Hello")

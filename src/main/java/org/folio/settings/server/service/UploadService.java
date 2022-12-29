@@ -16,6 +16,8 @@ import org.folio.settings.server.storage.UserException;
 
 public class UploadService {
 
+  private UploadService() { }
+
   static Future<Void> uploadEntries(RoutingContext ctx) {
     try {
       String contentType = ctx.request().getHeader(HttpHeaders.CONTENT_TYPE);
@@ -45,7 +47,7 @@ public class UploadService {
           storage.upsertEntry(entry)
               .onFailure(promise::tryFail)
               .onSuccess(b -> {
-                String key = b ? "inserted" : "updated";
+                String key = Boolean.TRUE.equals(b) ? "inserted" : "updated";
                 uploadResponse.put(key, uploadResponse.getInteger(key) + 1);
               })
               .onComplete(x -> {
