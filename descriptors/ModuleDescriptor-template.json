@@ -95,6 +95,20 @@
             "settings.users.write.*",
             "settings.owner.write.*"
           ]
+        },
+        {
+          "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/settings/upload",
+          "permissionsRequired": [
+            "settings.entries.upload"
+          ],
+          "permissionsDesired": [
+            "settings.global.write.*",
+            "settings.users.write.*",
+            "settings.owner.write.*"
+          ]
         }
       ]
     }
@@ -127,6 +141,11 @@
       "description": "Delete setting"
     },
     {
+      "permissionName": "settings.entries.upload",
+      "displayName": "settings - upload",
+      "description": "Upload settings"
+    },
+    {
       "permissionName": "settings.entries.all",
       "displayName": "settings - all setting permissions",
       "description": "All setting permissions",
@@ -135,7 +154,8 @@
         "settings.entries.collection.get",
         "settings.entries.item.get",
         "settings.entries.item.put",
-        "settings.entries.item.delete"
+        "settings.entries.item.delete",
+        "settings.entries.upload"
       ]
     }
   ],

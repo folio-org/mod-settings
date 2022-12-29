@@ -1,0 +1,30 @@
+{
+  "description": "Settings upload request body",
+  "type": "array",
+   "items": {
+     "type": "object",
+     "properties": {
+       "scope": {
+         "type": "string",
+         "description": "Scope for this entry (normally a module)"
+       },
+       "key": {
+         "type": "string",
+         "description": "Key within scope for this setting"
+       },
+       "value": {
+         "type": "object",
+         "description": "Settings value"
+       },
+       "userId": {
+         "type": "string",
+         "format": "uuid",
+         "description": "Owner of this setting (optional)"
+       }
+     },
+     "additionalProperties": false,
+     "required": [
+       "scope", "key", "value"
+     ]
+   }
+}

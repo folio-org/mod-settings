@@ -3,6 +3,7 @@ package org.folio.settings.server.service;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -29,7 +30,7 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
 
   public static final int BODY_LIMIT = 65536; // 64 kb
 
-  private static final Logger log = LogManager.getLogger("ConfigService");
+  private static final Logger log = LogManager.getLogger(SettingsService.class);
 
   @Override
   public Future<Router> createRouter(Vertx vertx) {
@@ -38,7 +39,12 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
           // https://vertx.io/docs/vertx-web/java/#_limiting_body_size
           routerBuilder.rootHandler(BodyHandler.create().setBodyLimit(BODY_LIMIT));
           handlers(routerBuilder);
-          return routerBuilder.createRouter();
+          Router router = Router.router(vertx);
+          router.put("/settings/upload")
+              .handler(ctx -> UploadService.uploadEntries(ctx)
+                  .onFailure(cause -> commonError(ctx, cause)));
+          router.route("/*").subRouter(routerBuilder.createRouter());
+          return router;
         });
   }
 
@@ -100,13 +106,7 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
         .failureHandler(this::failureHandler);
   }
 
-  /**
-   * Helper to create SettingsStorage from routing context.
-   * @param ctx rouging context.
-   * @return SettingsStorage instance
-   */
-  public static SettingsStorage create(RoutingContext ctx) {
-    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+  static SettingsStorage createFromParams(Vertx vertx, RequestParameters params) {
     // get tenant
     RequestParameter tenantParameter = params.headerParameter(XOkapiHeaders.TENANT);
     String tenant = tenantParameter.getString();
@@ -126,7 +126,32 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
     } else {
       permissions = new JsonArray();
     }
-    return new SettingsStorage(ctx.vertx(), tenant, currentUserId, permissions);
+    return new SettingsStorage(vertx, tenant, currentUserId, permissions);
+  }
+
+  static SettingsStorage create(RoutingContext ctx) {
+    return createFromParams(ctx.vertx(), ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY));
+  }
+
+  static SettingsStorage create(Vertx vertx, HttpServerRequest params) {
+    // get tenant
+    String tenant = params.getHeader(XOkapiHeaders.TENANT);
+
+    // get user Id
+    String userIdParameter = params.getHeader(XOkapiHeaders.USER_ID);
+    UUID currentUserId = null;
+    if (userIdParameter != null) {
+      currentUserId = UUID.fromString(userIdParameter);
+    }
+    // get permissions
+    String okapiPermissions = params.getHeader(XOkapiHeaders.PERMISSIONS);
+    JsonArray permissions;
+    if (okapiPermissions != null) {
+      permissions = new JsonArray(okapiPermissions);
+    } else {
+      permissions = new JsonArray();
+    }
+    return new SettingsStorage(vertx, tenant, currentUserId, permissions);
   }
 
   Future<Void> postSetting(RoutingContext ctx) {
@@ -188,9 +213,9 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     RequestParameter queryParameter = params.queryParameter("query");
     String query = queryParameter != null ? queryParameter.getString() : null;
-    RequestParameter limitParameter = params.pathParameter("limit");
+    RequestParameter limitParameter = params.queryParameter("limit");
     int limit = limitParameter != null ? limitParameter.getInteger() : 10;
-    RequestParameter offsetParameter = params.pathParameter("offset");
+    RequestParameter offsetParameter = params.queryParameter("offset");
     int offset = offsetParameter != null ? offsetParameter.getInteger() : 0;
     return storage.getEntries(ctx.response(), query, offset, limit);
   }
