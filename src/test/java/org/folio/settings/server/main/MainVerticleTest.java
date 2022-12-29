@@ -6,25 +6,18 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.settings.server.TestBase;
 import org.folio.settings.server.service.SettingsService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 
 @RunWith(VertxUnitRunner.class)
 public class MainVerticleTest extends TestBase {
-  private final static Logger log = LogManager.getLogger("MainVerticleTest");
-
   @Test
   public void testAdminHealth() {
     RestAssured.given()
@@ -250,7 +243,7 @@ public class MainVerticleTest extends TestBase {
   }
 
   @Test
-  public void testConstaintsWithoutUser() {
+  public void testConstraintsWithoutUser() {
     JsonObject en1 = new JsonObject()
         .put("id", UUID.randomUUID().toString())
         .put("scope", UUID.randomUUID().toString())
@@ -301,7 +294,7 @@ public class MainVerticleTest extends TestBase {
   }
 
   @Test
-  public void testConstaintsWithUser() {
+  public void testConstraintsWithUser() {
     JsonObject en1 = new JsonObject()
         .put("id", UUID.randomUUID().toString())
         .put("scope", UUID.randomUUID().toString())
@@ -406,7 +399,7 @@ public class MainVerticleTest extends TestBase {
   }
 
   @Test
-  public void testConstaintId() {
+  public void testConstraintId() {
     JsonObject en = new JsonObject()
         .put("id", UUID.randomUUID().toString())
         .put("scope", UUID.randomUUID().toString())
@@ -629,8 +622,6 @@ public class MainVerticleTest extends TestBase {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header(XOkapiHeaders.PERMISSIONS, permGlobalRead.encode())
-        .contentType(ContentType.JSON)
-        .body(en.encode())
         .get("/settings/entries")
         .then()
         .statusCode(200)
@@ -640,9 +631,29 @@ public class MainVerticleTest extends TestBase {
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
-        .header(XOkapiHeaders.PERMISSIONS, permUsersRead.encode())
+        .header(XOkapiHeaders.PERMISSIONS, permGlobalRead.encode())
+        .queryParam("limit", 3)
+        .get("/settings/entries")
+        .then()
+        .statusCode(200)
         .contentType(ContentType.JSON)
-        .body(en.encode())
+        .body("items", hasSize(3))
+        .body("resultInfo.totalRecords", is(15));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.PERMISSIONS, permGlobalRead.encode())
+        .queryParam("offset", 12)
+        .get("/settings/entries")
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("items", hasSize(3))
+        .body("resultInfo.totalRecords", is(15));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.PERMISSIONS, permUsersRead.encode())
         .get("/settings/entries")
         .then()
         .statusCode(200)
@@ -654,8 +665,17 @@ public class MainVerticleTest extends TestBase {
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header(XOkapiHeaders.USER_ID, userId.toString())
         .header(XOkapiHeaders.PERMISSIONS, permOwnerRead.encode())
+        .get("/settings/entries")
+        .then()
+        .statusCode(200)
         .contentType(ContentType.JSON)
-        .body(en.encode())
+        .body("items", hasSize(2))
+        .body("resultInfo.totalRecords", is(2));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.USER_ID, userId.toString())
+        .header(XOkapiHeaders.PERMISSIONS, permOwnerRead.encode())
         .get("/settings/entries")
         .then()
         .statusCode(200)
@@ -669,8 +689,6 @@ public class MainVerticleTest extends TestBase {
         .header(XOkapiHeaders.PERMISSIONS, permOwnerRead.encode())
         .queryParam("query", "scope=\""
             + en3.getString("scope") + "\" and key=l1")
-        .contentType(ContentType.JSON)
-        .body(en.encode())
         .get("/settings/entries")
         .then()
         .statusCode(200)
@@ -681,11 +699,153 @@ public class MainVerticleTest extends TestBase {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header(XOkapiHeaders.PERMISSIONS, new JsonArray().encode())
-        .contentType(ContentType.JSON)
-        .body(en.encode())
         .get("/settings/entries")
         .then()
         .statusCode(403)
         .contentType(ContentType.TEXT);
+  }
+
+  @Test
+  public void testUploadFailures() {
+    String scope = UUID.randomUUID().toString();
+    UUID userId = UUID.randomUUID();
+    JsonArray permissionsLacking = new JsonArray().add("settings.owner.write.other");
+    JsonArray permOwnerWrite = new JsonArray().add("settings.owner.write." + scope);
+    int no = 3;
+    JsonArray ar = new JsonArray();
+    for (int i = 0; i < no; i++) {
+      JsonObject en = new JsonObject()
+          .put("scope", scope)
+          .put("key", "k" + i)
+          .put("userId", userId.toString())
+          .put("value", new JsonObject().put("v", "thevalue"));
+      ar.add(en);
+    }
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.USER_ID, userId.toString())
+        .header(XOkapiHeaders.PERMISSIONS, permissionsLacking.encode())
+        .contentType(ContentType.JSON)
+        .body(ar.encode())
+        .put("/settings/upload")
+        .then()
+        .statusCode(403)
+        .contentType(ContentType.TEXT)
+        .body(is("Forbidden"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.USER_ID, userId.toString())
+        .header(XOkapiHeaders.PERMISSIONS, permOwnerWrite.encode())
+        .contentType(ContentType.TEXT)
+        .body("Hello")
+        .put("/settings/upload")
+        .then()
+        .statusCode(400)
+        .contentType(ContentType.TEXT)
+        .body(is("Content-Type must be application/json"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.USER_ID, userId.toString())
+        .header(XOkapiHeaders.PERMISSIONS, permOwnerWrite.encode())
+        .contentType(ContentType.JSON)
+        .body("[{\"a\":\"b\"}]")
+        .put("/settings/upload")
+        .then()
+        .statusCode(403)
+        .contentType(ContentType.TEXT)
+        .body(is("Forbidden"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.USER_ID, userId.toString())
+        .header(XOkapiHeaders.PERMISSIONS, permOwnerWrite.encode())
+        .contentType(ContentType.JSON)
+        .body("[{\"a\":]")
+        .put("/settings/upload")
+        .then()
+        .statusCode(400)
+        .contentType(ContentType.TEXT)
+        .body(containsString("Unexpected character"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.USER_ID, userId.toString())
+        .header(XOkapiHeaders.PERMISSIONS, permOwnerWrite.encode())
+        .put("/settings/upload")
+        .then()
+        .statusCode(400)
+        .contentType(ContentType.TEXT)
+        .body(is("Content-Type must be application/json"));
+  }
+
+  @Test
+  public void testUploadOK() {
+    String scope = UUID.randomUUID().toString();
+    UUID userId = UUID.randomUUID();
+    JsonArray permOwnerWrite = new JsonArray().add("settings.owner.write." + scope);
+    JsonArray permOwnerRead = new JsonArray().add("settings.owner.read." + scope);
+    int no = 100;
+    JsonArray ar = new JsonArray();
+    for (int i = 0; i < no; i++) {
+      JsonObject en = new JsonObject()
+          .put("scope", scope)
+          .put("key", "k" + i)
+          .put("userId", userId.toString())
+          .put("value", new JsonObject().put("v", "s".repeat(1000)));
+      ar.add(en);
+    }
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.USER_ID, userId.toString())
+        .header(XOkapiHeaders.PERMISSIONS, permOwnerWrite.encode())
+        .contentType(ContentType.JSON)
+        .body(ar.encode())
+        .put("/settings/upload")
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("inserted", is(no))
+        .body("updated", is(0));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.USER_ID, userId.toString())
+        .header(XOkapiHeaders.PERMISSIONS, permOwnerWrite.encode())
+        .contentType(ContentType.JSON)
+        .body(ar.encode())
+        .put("/settings/upload")
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("inserted", is(0))
+        .body("updated", is(no));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.USER_ID, userId.toString())
+        .header(XOkapiHeaders.PERMISSIONS, permOwnerRead.encode())
+        .queryParam("limit", 0)
+        .contentType(ContentType.JSON)
+        .get("/settings/entries")
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("items", hasSize(0))
+        .body("resultInfo.totalRecords", is(no));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.USER_ID, userId.toString())
+        .header(XOkapiHeaders.PERMISSIONS, permOwnerRead.encode())
+        .queryParam("limit", 0)
+        .contentType(ContentType.JSON)
+        .get("/settings/entries")
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("items", hasSize(0))
+        .body("resultInfo.totalRecords", is(no));
   }
 }
