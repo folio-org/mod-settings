@@ -803,6 +803,35 @@ public class MainVerticleTest extends TestBase {
   }
 
   @Test
+  public void uploadIdMustNotBeSupplied() {
+    String scope = UUID.randomUUID().toString();
+    UUID userId = UUID.randomUUID();
+    JsonArray permOwnerWrite = new JsonArray().add("settings.owner.write." + scope);
+    int no = 2;
+    JsonArray ar = new JsonArray();
+    for (int i = 0; i < no; i++) {
+      JsonObject en = new JsonObject()
+          .put("id", UUID.randomUUID().toString())
+          .put("scope", scope)
+          .put("key", "k" + i)
+          .put("userId", userId.toString())
+          .put("value", new JsonObject().put("v", "thevalue"));
+      ar.add(en);
+    }
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.USER_ID, userId.toString())
+        .header(XOkapiHeaders.PERMISSIONS, permOwnerWrite.encode())
+        .contentType(ContentType.JSON)
+        .body(ar.encode())
+        .put("/settings/upload")
+        .then()
+        .statusCode(400)
+        .contentType(ContentType.TEXT)
+        .body(is("No id must supplied for upload"));
+  }
+
+  @Test
   public void testUploadOK() {
     String scope = UUID.randomUUID().toString();
     UUID userId = UUID.randomUUID();
