@@ -2,10 +2,10 @@
 
 set -e
 U=http://localhost:9130
-T=testlib1
+tenant=testlib1
 username=testing_admin
 password=admin
-curl -d"{\"id\":\"$T\"}" $U/_/proxy/tenants
+curl -d"{\"id\":\"$tenant\"}" $U/_/proxy/tenants
 curl -d'{"name":"DB_HOST","value":"localhost"}' $U/_/env
 curl -d'{"name":"DB_PORT","value":"5432"}' $U/_/env
 curl -d'{"name":"DB_USERNAME","value":"folio"}' $U/_/env
@@ -85,14 +85,14 @@ install_modules() {
 	else
 		OPT=""
 	fi
-	curl -s $OPT "-d$j" "$U/_/proxy/tenants/$T/install?purge=true&tenantParameters=loadReference%3Dtrue%2CloadSample%3Dtrue"
+	curl -s $OPT "-d$j" "$U/_/proxy/tenants/$tenant/install?purge=true&tenantParameters=loadReference%3Dtrue%2CloadSample%3Dtrue"
 }
 
 okapi_curl() {
 	if test "$1" != "x"; then
 		local OPT="-HX-Okapi-Token:$1"
 	else
-		local OPT="-HX-Okapi-Tenant:$T"
+		local OPT="-HX-Okapi-Tenant:$tenant"
 	fi
 	shift
 	curl -s $OPT -HContent-Type:application/json $*
@@ -111,7 +111,7 @@ make_adminuser() {
 }
 
 login_admin() {
-	curl -s -Dheaders -HX-Okapi-Tenant:$T -HContent-Type:application/json -d"{\"username\":\"$username\",\"password\":\"$password\"}" $U/authn/login
+	curl -s -Dheaders -HX-Okapi-Tenant:$tenant -HContent-Type:application/json -d"{\"username\":\"$username\",\"password\":\"$password\"}" $U/authn/login
 token=`awk '/x-okapi-token/ {print $2}' <headers|tr -d '[:space:]'`
 }
 
