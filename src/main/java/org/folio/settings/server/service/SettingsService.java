@@ -29,7 +29,7 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
 
   public static final int BODY_LIMIT = 65536; // 64 kb
 
-  private static final Logger log = LogManager.getLogger("ConfigService");
+  private static final Logger log = LogManager.getLogger(SettingsService.class);
 
   @Override
   public Future<Router> createRouter(Vertx vertx) {
