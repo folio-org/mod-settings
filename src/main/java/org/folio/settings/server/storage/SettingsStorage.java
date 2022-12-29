@@ -2,6 +2,7 @@ package org.folio.settings.server.storage;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -152,6 +153,12 @@ public class SettingsStorage {
     return entry;
   }
 
+  static String getOnConflictClause(Entry entry) {
+    return entry.getUserId() != null
+        ? "ON CONFLICT (scope, key, userId) WHERE userId is NOT NULL"
+        : "ON CONFLICT (scope, key) WHERE userId is NULL";
+  }
+
   /**
    * Create settings entry.
    *
@@ -162,15 +169,11 @@ public class SettingsStorage {
     if (!checkDesiredPermissions("write", permissions, entry, currentUser)) {
       return Future.failedFuture(new ForbiddenException());
     }
-    // direct to unique index as userId = NULL would be considered unique
-    String constraintWhere = entry.getUserId() != null
-        ? "ON CONFLICT (scope, key, userId) WHERE userId is NOT NULL DO NOTHING"
-        : "ON CONFLICT (scope, key) WHERE userId is NULL DO NOTHING";
     return pool.preparedQuery(
             "INSERT INTO " + settingsTable
                 + " (id, scope, key, value, userId)"
                 + " VALUES ($1, $2, $3, $4, $5)"
-                + constraintWhere
+                + getOnConflictClause(entry) + " DO NOTHING"
         )
         .execute(Tuple.of(entry.getId(), entry.getScope(),
             entry.getKey(), entry.getValue(),
@@ -277,6 +280,32 @@ public class SettingsStorage {
   }
 
   /**
+   * Upsert settings entry.
+   * @param entry new entry or entry with new value
+   * @return async result with true if inserted; false if updated
+   */
+  public Future<Boolean> upsertEntry(Entry entry) {
+    if (entry.getId() != null) {
+      return Future.failedFuture(new UserException("No id must supplied for upload"));
+    }
+    entry.setId(UUID.randomUUID());
+    if (!checkDesiredPermissions("write", permissions, entry, currentUser)) {
+      return Future.failedFuture(new ForbiddenException());
+    }
+    return pool.preparedQuery(
+            "INSERT INTO " + settingsTable
+                + "(id, scope, key, value, userId)"
+                + " VALUES ($1, $2, $3, $4, $5)"
+              + getOnConflictClause(entry) + " DO UPDATE SET value = $4"
+              + " RETURNING id"
+        )
+        .execute(Tuple.of(entry.getId(), entry.getScope(),
+            entry.getKey(), entry.getValue(),
+            entry.getUserId()))
+        .map(rowSet -> rowSet.iterator().next().getUUID("id").equals(entry.getId()));
+  }
+
+  /**
    * Get entries with optional cqlQuery.
    *
    * @param response HTTP response for result
@@ -326,7 +355,7 @@ public class SettingsStorage {
         .compose(pq ->
             connection.begin().map(tx -> {
               response.setChunked(true);
-              response.putHeader("Content-Type", "application/json");
+              response.putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
               response.write("{ \"" + property + "\" : [");
               AtomicBoolean first = new AtomicBoolean(true);
               RowStream<Row> stream = pq.createStream(sqlStreamFetchSize, tuple);
