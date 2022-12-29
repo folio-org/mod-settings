@@ -45,11 +45,12 @@ public class UploadService {
             jsonParser.pause();
           }
           storage.upsertEntry(entry)
-              .onFailure(promise::tryFail)
-              .onSuccess(b -> {
+              .map(b -> {
                 String key = Boolean.TRUE.equals(b) ? "inserted" : "updated";
                 uploadResponse.put(key, uploadResponse.getInteger(key) + 1);
+                return null;
               })
+              .onFailure(promise::tryFail)
               .onComplete(x -> {
                 if (pending.decrementAndGet() <= 2) {
                   jsonParser.resume();
