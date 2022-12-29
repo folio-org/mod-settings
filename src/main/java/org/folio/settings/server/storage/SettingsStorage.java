@@ -73,6 +73,7 @@ public class SettingsStorage {
             + " value JSONB NOT NULL,"
             + " userId uuid"
             + ")",
+        // need two as userId = NULL would be considered unique
         "CREATE UNIQUE INDEX IF NOT EXISTS settings_scope_key_users ON "
             + settingsTable + "(scope, key, userId) WHERE userId is NOT NULL",
         "CREATE UNIQUE INDEX IF NOT EXISTS settings_scope_key_global ON "
@@ -152,7 +153,7 @@ public class SettingsStorage {
   }
 
   /**
-   * Create configurations entry.
+   * Create settings entry.
    *
    * @param entry to be created
    * @return async result with success if created; failed otherwise
@@ -161,6 +162,7 @@ public class SettingsStorage {
     if (!checkDesiredPermissions("write", permissions, entry, currentUser)) {
       return Future.failedFuture(new ForbiddenException());
     }
+    // direct to unique index as userId = NULL would be considered unique
     String constraintWhere = entry.getUserId() != null
         ? "ON CONFLICT (scope, key, userId) WHERE userId is NOT NULL DO NOTHING"
         : "ON CONFLICT (scope, key) WHERE userId is NULL DO NOTHING";
@@ -182,7 +184,7 @@ public class SettingsStorage {
   }
 
   /**
-   * Get configurations entry.
+   * Get settings entry.
    *
    * @param id entry identifier
    * @return async result with entry value; failure otherwise
@@ -214,7 +216,7 @@ public class SettingsStorage {
   }
 
   /**
-   * Delete configurations entry.
+   * Delete settings entry.
    *
    * @param id entry identifier
    * @return async result; exception if not found or forbidden
@@ -240,7 +242,7 @@ public class SettingsStorage {
   }
 
   /**
-   * Update configurations entry.
+   * Update settings entry.
    *
    * @param entry to be created
    * @return async result with success if created; failed otherwise

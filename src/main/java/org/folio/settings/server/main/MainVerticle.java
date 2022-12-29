@@ -26,11 +26,11 @@ public class MainVerticle extends AbstractVerticle {
         Config.getSysConf("http.port", "port", "8081", config()));
     log.info("Listening on port {}", port);
 
-    var config = new SettingsService();
+    var settingsService = new SettingsService();
 
     RouterCreator[] routerCreators = {
-        config,
-        new Tenant2Api(config),
+        settingsService,
+        new Tenant2Api(settingsService),
         new HealthApi(),
     };
 
