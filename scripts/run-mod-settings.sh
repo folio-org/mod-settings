@@ -170,8 +170,8 @@ okapi_curl $token -d'{"permissionName":"settings.owner.read.oscope"}' $U/perms/u
 
 echo "puid=$puid"
 echo "uid=$uid"
-echo "Waiting 60 seconds for the permissions to take effect (mod-authtoken cache)"
-sleep 20
+echo "Waiting 61 seconds for the permissions to take effect (mod-authtoken cache)"
+sleep 21
 echo "40 go to"
 sleep 20
 echo "20 to go"
