@@ -154,12 +154,12 @@ cat >md.json <<END
       "displayName": "oscope: owner write"
     },
     {
-      "permissionName": "settings.user.read.oscope",
-      "displayName": "oscope: user read"
+      "permissionName": "settings.user.read.uscope",
+      "displayName": "uscope: user read"
     },
     {
-      "permissionName": "settings.user.write.oscope",
-      "displayName": "oscope: user write"
+      "permissionName": "settings.user.write.uscope",
+      "displayName": "uscope: user write"
     }
    ]
 }
