@@ -5,7 +5,7 @@ U=http://localhost:9130
 tenant=testlib1
 username=testing_admin
 password=admin
-curl -d"{\"id\":\"$tenant\"}" $U/_/proxy/tenants
+curl -f -d"{\"id\":\"$tenant\"}" $U/_/proxy/tenants
 curl -d'{"name":"DB_HOST","value":"localhost"}' $U/_/env
 curl -d'{"name":"DB_PORT","value":"5432"}' $U/_/env
 curl -d'{"name":"DB_USERNAME","value":"folio"}' $U/_/env
