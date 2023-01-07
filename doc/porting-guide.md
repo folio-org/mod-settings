@@ -57,7 +57,7 @@ For each scope used by the module, it must define up to six permissions (dependi
 * `settings.users.read.SCOPE` -- read _any_ user's settings
 * `settings.users.write.SCOPE` -- create, update and delete _any_ user's settings
 
-Modules _may_, but need not, also define higher-level permissions for assignment to users. For example, the `MODULE.settings.regular-user` permission might include `settings.global.read.SCOPE`, `settings.owner.read.SCOPE` and `settings.owner.write.SCOPE`, allowing a user with this permission to read tenant-wide settings provided by an administrator, and maintain their own personal overrides.
+Modules _may_, but need not, also define higher-level permissions for assignment to users. For example, the `MODULE.settings.regular-user` permission might include `settings.global.read.SCOPE`, `settings.owner.read.SCOPE` and `settings.owner.write.SCOPE`, allowing users with this permission to read tenant-wide settings provided by an administrator, and maintain their own personal overrides.
 
 
 ### 4. Change the WSAPI path
@@ -65,7 +65,7 @@ Modules _may_, but need not, also define higher-level permissions for assignment
 The old mod-configuration web-service is accessed on the WSAPI path `/configurations/entries`. This will need to be changed to `/settings/entries`.
 
 **Note.**
-The change to the path must not be made in isolation, but in conjunction with the changes to the entry parameters documented below, since the mod-search API is not identical to that of mod-configuration.
+The change to the path must not be made in isolation, but in conjunction with the changes to the entry parameters documented below, since the mod-settings API is not identical to that of mod-configuration.
 
 
 ### 5. Change the entry parameters
@@ -76,7 +76,7 @@ Some thought must be given to how to represent information from mod-configuratio
 The Users UI modules currently stores in mod-configuration a list of the IDs of users whose records may not be edited (usually just that of the tenant administrator). This entry is identified by the module name `@folio/users` and the configName `suppressEdit`, with no code. This translates simply to a mod-settings entry with scope `ui-users` and key `suppressEdit` (using the canonical module name as the scope).
 
 **Example 2.**
-The backend email-sending module mod-email stores SMTP connection information in several mod-configuration entries, all with module name `SMTP_SERVER` and configName `email`, and with codes such as `EMAIL_SMTP_HOST`, `EMAIL_SMTP_PORT`, `EMAIL_FROM`, etc. This information would be naturally represented as a set of mod-settings entries, all with scope `mod-email` and keys `smtpHost`, `smtpPort`, `from`, etc.
+The backend email-sending module mod-email stores SMTP connection information in several mod-configuration entries, all with module name `SMTP_SERVER` and configName `email`, and with codes such as `EMAIL_SMTP_HOST`, `EMAIL_SMTP_PORT`, `EMAIL_FROM`, etc. This information would be naturally represented as a group of mod-settings entries, all with scope `mod-email` and keys `smtpHost`, `smtpPort`, `from`, etc.
 
 **Example 3.**
 Consider a backend module, `mod-animals`, which uses mod-configuration to store three settings:
@@ -95,7 +95,7 @@ Since many uses of configuration on UI modules are made via utility components s
 
 ### 6. Consider how to port existing configuration entries
 
-It is one thing to update code to use mod-settings instead of mod-configuration; but it is another to ensure that the relevant entries are in place to keep things working as they were before. As noted above, it is not in general possible to automatically translate mod-configuration entry parameters to those used by mod-search, so module-specific logic will be necessary.
+It is one thing to update code to use mod-settings instead of mod-configuration; but it is another to ensure that the relevant entries are in place to keep things working as they were before. As noted above, it is not in general possible to automatically translate mod-configuration entry parameters to those used by mod-settings, so module-specific logic will be necessary.
 
 It may be worthwhile to create a configurable entry-porting tool.
 
