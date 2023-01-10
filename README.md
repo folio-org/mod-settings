@@ -100,6 +100,15 @@ Delete a setting [with](https://s3.amazonaws.com/foliodocs/api/mod-settings/sett
 
 This is a write operation and returns 204 if the setting was deleted.
 
+It's also possible to upload (or "import") settings
+[with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/uploadSettings):
+
+    PUT /settings/upload
+
+Settings are created/updated with this service. The provided settings must
+not include an identifier. An identifier will be assigned by the server when
+necessary.
+
 ## Compilation
 
 Requirements:
