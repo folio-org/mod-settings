@@ -188,6 +188,15 @@ public class MainVerticleTest extends TestBase {
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.PERMISSIONS, permRead.encode())
+        .contentType(ContentType.JSON)
+        .body(en.encode())
+        .put("/settings/entries/" + en.getString("id"))
+        .then()
+        .statusCode(403);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
         .contentType(ContentType.JSON)
         .body(en.encode())

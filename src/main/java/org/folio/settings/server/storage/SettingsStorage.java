@@ -36,6 +36,14 @@ public class SettingsStorage {
 
   private static final String CREATE_IF_NO_EXISTS = "CREATE TABLE IF NOT EXISTS ";
 
+  private static final String PERM_PREFIX = "settings";
+  private static final String PERM_USERS = "users";
+  private static final String PERM_GLOBAL = "global";
+  private static final String PERM_OWNER = "owner";
+
+  private static final String PERM_READ = "read";
+  private static final String PERM_WRITE = "write";
+
   private final TenantPgPool pool;
 
   private final String settingsTable;
@@ -43,6 +51,7 @@ public class SettingsStorage {
   private final JsonArray permissions;
 
   private final UUID currentUser;
+
 
 
   /**
@@ -95,12 +104,15 @@ public class SettingsStorage {
       Entry entry, UUID currentUser) {
     UUID userId = entry.getUserId();
     if (userId == null) {
-      return permissions.contains("settings.global." + type + "." + entry.getScope());
+      return permissions.contains(PERM_PREFIX + "." + PERM_GLOBAL + "."
+          + type + "." + entry.getScope());
     }
-    if (permissions.contains("settings.users." + type + "." + entry.getScope())) {
+    if (permissions.contains(PERM_PREFIX + "." + PERM_USERS + "."
+        + type + "." + entry.getScope())) {
       return true;
     }
-    return permissions.contains("settings.owner." + type + "." + entry.getScope())
+    return permissions.contains(PERM_PREFIX + "." + PERM_OWNER + "."
+        + type + "." + entry.getScope())
         && currentUser != null && currentUser.equals(userId);
   }
 
@@ -109,33 +121,38 @@ public class SettingsStorage {
     Map<String, Set<String>> scopeMap = new HashMap<>();
     permissions.forEach(p -> {
       if (p instanceof String str) {
-        String[] split = str.split("\\.");
-        if (split.length == 4 && split[0].equals("settings")
-            && "read".equals(split[2])) {
-          String scope = split[3];
-          scopeMap.putIfAbsent(scope, new TreeSet<>());
-          Set<String> rights = scopeMap.get(scope);
-          rights.add(split[1]);
+        int off1 = str.indexOf('.');
+        int off2 = str.indexOf('.', off1 + 1);
+        int off3 = str.indexOf('.', off2 + 1);
+        if (off1 > 0 && off2 > 0 && off3 > 0
+            && str.substring(0, off1).equals(PERM_PREFIX)
+            && str.substring(off2 + 1, off3).equals(PERM_READ)) {
+          String scope = str.substring(off3 + 1);
+          if (!scope.isEmpty()) {
+            scopeMap.putIfAbsent(scope, new TreeSet<>());
+            Set<String> rights = scopeMap.get(scope);
+            rights.add(str.substring(off1 + 1, off2));
+          }
         }
       }
     });
     List<String> queryLimits = new ArrayList<>();
     scopeMap.forEach((scope,rights) -> {
-      String scopeEq = "scope = \"" + scope + "\"";
-      if (rights.contains("global")) {
-        if (rights.contains("users")) {
+      String scopeEq = "scope == \"" + scope + "\"";
+      if (rights.contains(PERM_GLOBAL)) {
+        if (rights.contains(PERM_USERS)) {
           queryLimits.add(scopeEq);
-        } else if (rights.contains("owner") && currentUser != null) {
+        } else if (rights.contains(PERM_OWNER) && currentUser != null) {
           queryLimits.add("(" + scopeEq
-              + " and (userId <> \"\" or userId = \"" + currentUser + "\"))");
+              + " and (userId <> \"\" or userId == \"" + currentUser + "\"))");
         } else {
           queryLimits.add("(" + scopeEq + " and userId <> \"\")");
         }
       } else {
-        if (rights.contains("users")) {
+        if (rights.contains(PERM_USERS)) {
           queryLimits.add("(" + scopeEq + " and userId = \"\")");
-        } else if (rights.contains("owner") && currentUser != null) {
-          queryLimits.add("(" + scopeEq + " and userId = \"" + currentUser + "\")");
+        } else if (rights.contains(PERM_OWNER) && currentUser != null) {
+          queryLimits.add("(" + scopeEq + " and userId == \"" + currentUser + "\")");
         }
       }
     });
@@ -166,7 +183,7 @@ public class SettingsStorage {
    * @return async result with success if created; failed otherwise
    */
   public Future<Void> createEntry(Entry entry) {
-    if (!checkDesiredPermissions("write", permissions, entry, currentUser)) {
+    if (!checkDesiredPermissions(PERM_WRITE, permissions, entry, currentUser)) {
       return Future.failedFuture(new ForbiddenException());
     }
     return pool.preparedQuery(
@@ -198,7 +215,7 @@ public class SettingsStorage {
           if (entry == null) {
             throw new NotFoundException();
           }
-          if (!checkDesiredPermissions("read", permissions, entry, currentUser)) {
+          if (!checkDesiredPermissions(PERM_READ, permissions, entry, currentUser)) {
             throw new NotFoundException();
           }
           return entry;
@@ -229,7 +246,7 @@ public class SettingsStorage {
       if (entry == null) {
         return Future.failedFuture(new NotFoundException());
       }
-      if (!checkDesiredPermissions("write", permissions, entry, currentUser)) {
+      if (!checkDesiredPermissions(PERM_WRITE, permissions, entry, currentUser)) {
         return Future.failedFuture(new NotFoundException());
       }
       return pool.preparedQuery(
@@ -251,7 +268,7 @@ public class SettingsStorage {
    * @return async result with success if created; failed otherwise
    */
   public Future<Void> updateEntry(Entry entry) {
-    if (!checkDesiredPermissions("write", permissions, entry, currentUser)) {
+    if (!checkDesiredPermissions(PERM_WRITE, permissions, entry, currentUser)) {
       return Future.failedFuture(new ForbiddenException());
     }
     return pool.preparedQuery(
@@ -289,7 +306,7 @@ public class SettingsStorage {
       return Future.failedFuture(new UserException("No id must supplied for upload"));
     }
     entry.setId(UUID.randomUUID());
-    if (!checkDesiredPermissions("write", permissions, entry, currentUser)) {
+    if (!checkDesiredPermissions(PERM_WRITE, permissions, entry, currentUser)) {
       return Future.failedFuture(new ForbiddenException());
     }
     return pool.preparedQuery(
