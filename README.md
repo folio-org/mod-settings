@@ -117,6 +117,10 @@ Requirements:
 * Maven 3.6.3 or later
 * Docker (unless `-DskipTests` is used)
 
+Note: Debian package maven-3.6.3-1
+[does not work with Java16/Java17](https://bugs.launchpad.net/ubuntu/+source/maven/+bug/1930541)
+
+
 You need `JAVA_HOME` set, e.g.:
 
    * Linux: `export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:bin/javac::")`
