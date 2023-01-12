@@ -151,7 +151,7 @@ public class SettingsStorage {
       } else {
         if (rights.contains(PERM_USERS)) {
           queryLimits.add("(" + scopeEq + " and userId = \"\")");
-        } else if (rights.contains("owner") && currentUser != null) {
+        } else if (rights.contains(PERM_OWNER) && currentUser != null) {
           queryLimits.add("(" + scopeEq + " and userId == \"" + currentUser + "\")");
         }
       }
