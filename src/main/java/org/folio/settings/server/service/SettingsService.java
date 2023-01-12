@@ -145,12 +145,10 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
     }
     // get permissions
     String okapiPermissions = params.getHeader(XOkapiHeaders.PERMISSIONS);
-    JsonArray permissions;
-    if (okapiPermissions != null) {
-      permissions = new JsonArray(okapiPermissions);
-    } else {
-      permissions = new JsonArray();
+    if (okapiPermissions == null) {
+      throw new UserException("Missing header " + XOkapiHeaders.PERMISSIONS);
     }
+    JsonArray permissions = new JsonArray(okapiPermissions);
     return new SettingsStorage(vertx, tenant, currentUserId, permissions);
   }
 

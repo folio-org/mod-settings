@@ -124,6 +124,34 @@ public class MainVerticleTest extends TestBase {
   }
 
   @Test
+  public void testMissingPermissionsHeader() {
+    JsonObject en = new JsonObject()
+        .put("id", UUID.randomUUID().toString())
+        .put("scope", UUID.randomUUID().toString())
+        .put("key", "k1")
+        .put("value", new JsonObject().put("v", "thevalue"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .contentType(ContentType.JSON)
+        .body(en.encode())
+        .post("/settings/entries")
+        .then()
+        .statusCode(400)
+        .contentType(ContentType.TEXT)
+        .body(containsString("Missing parameter X-Okapi-Permissions in HEADER"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .contentType(ContentType.JSON)
+        .get("/settings/entries")
+        .then()
+        .statusCode(400)
+        .contentType(ContentType.TEXT)
+        .body(containsString("Missing parameter X-Okapi-Permissions in HEADER"));
+  }
+
+  @Test
   public void testPostInvalidSetting() {
     JsonObject en = new JsonObject()
         // id missing
@@ -223,13 +251,14 @@ public class MainVerticleTest extends TestBase {
   public void testNotFound() {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.PERMISSIONS, "[]")
         .get("/settings/entries/" + UUID.randomUUID())
         .then()
         .statusCode(404);
 
-
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.PERMISSIONS, "[]")
         .delete("/settings/entries/" + UUID.randomUUID())
         .then()
         .statusCode(404);
@@ -749,9 +778,9 @@ public class MainVerticleTest extends TestBase {
         .body(ar.encode())
         .put("/settings/upload")
         .then()
-        .statusCode(403)
+        .statusCode(400)
         .contentType(ContentType.TEXT)
-        .body(is("Forbidden"));
+        .body(is("Missing header X-Okapi-Permissions"));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
