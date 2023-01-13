@@ -4,3 +4,4 @@ description: Okapi Tenant
 required: true
 schema:
   type: string
+  pattern: '^[_a-z][_a-z0-9]*$'
