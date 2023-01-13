@@ -32,12 +32,12 @@
           ],
           "pathPattern": "/settings/entries",
           "permissionsRequired": [
-            "settings.entries.item.post"
+            "mod-settings.entries.item.post"
           ],
           "permissionsDesired": [
-            "settings.global.write.*",
-            "settings.users.write.*",
-            "settings.owner.write.*"
+            "mod-settings.global.write.*",
+            "mod-settings.users.write.*",
+            "mod-settings.owner.write.*"
           ]
         },
         {
@@ -46,12 +46,12 @@
           ],
           "pathPattern": "/settings/entries",
           "permissionsRequired": [
-            "settings.entries.collection.get"
+            "mod-settings.entries.collection.get"
           ],
           "permissionsDesired": [
-            "settings.global.read.*",
-            "settings.users.read.*",
-            "settings.owner.read.*"
+            "mod-settings.global.read.*",
+            "mod-settings.users.read.*",
+            "mod-settings.owner.read.*"
           ]
         },
         {
@@ -60,12 +60,12 @@
           ],
           "pathPattern": "/settings/entries/{id}",
           "permissionsRequired": [
-            "settings.entries.item.get"
+            "mod-settings.entries.item.get"
           ],
           "permissionsDesired": [
-            "settings.global.read.*",
-            "settings.users.read.*",
-            "settings.owner.read.*"
+            "mod-settings.global.read.*",
+            "mod-settings.users.read.*",
+            "mod-settings.owner.read.*"
           ]
         },
         {
@@ -74,12 +74,12 @@
           ],
           "pathPattern": "/settings/entries/{id}",
           "permissionsRequired": [
-            "settings.entries.item.put"
+            "mod-settings.entries.item.put"
           ],
           "permissionsDesired": [
-            "settings.global.write.*",
-            "settings.users.write.*",
-            "settings.owner.write.*"
+            "mod-settings.global.write.*",
+            "mod-settings.users.write.*",
+            "mod-settings.owner.write.*"
           ]
         },
         {
@@ -88,12 +88,12 @@
           ],
           "pathPattern": "/settings/entries/{id}",
           "permissionsRequired": [
-            "settings.entries.item.delete"
+            "mod-settings.entries.item.delete"
           ],
           "permissionsDesired": [
-            "settings.global.write.*",
-            "settings.users.write.*",
-            "settings.owner.write.*"
+            "mod-settings.global.write.*",
+            "mod-settings.users.write.*",
+            "mod-settings.owner.write.*"
           ]
         },
         {
@@ -102,12 +102,12 @@
           ],
           "pathPattern": "/settings/upload",
           "permissionsRequired": [
-            "settings.entries.upload"
+            "mod-settings.entries.upload"
           ],
           "permissionsDesired": [
-            "settings.global.write.*",
-            "settings.users.write.*",
-            "settings.owner.write.*"
+            "mod-settings.global.write.*",
+            "mod-settings.users.write.*",
+            "mod-settings.owner.write.*"
           ]
         }
       ]
@@ -116,46 +116,46 @@
   "requires": [],
   "permissionSets": [
     {
-      "permissionName": "settings.entries.item.post",
+      "permissionName": "mod-settings.entries.item.post",
       "displayName": "settings - create setting",
       "description": "Create setting"
     },
     {
-      "permissionName": "settings.entries.collection.get",
+      "permissionName": "mod-settings.entries.collection.get",
       "displayName": "settings - get settings",
       "description": "Get settings"
     },
     {
-      "permissionName": "settings.entries.item.get",
+      "permissionName": "mod-settings.entries.item.get",
       "displayName": "settings - get setting",
       "description": "Get setting"
     },
     {
-      "permissionName": "settings.entries.item.put",
+      "permissionName": "mod-settings.entries.item.put",
       "displayName": "settings - update setting",
       "description": "Update setting"
     },
     {
-      "permissionName": "settings.entries.item.delete",
+      "permissionName": "mod-settings.entries.item.delete",
       "displayName": "settings - delete setting",
       "description": "Delete setting"
     },
     {
-      "permissionName": "settings.entries.upload",
+      "permissionName": "mod-settings.entries.upload",
       "displayName": "settings - upload",
       "description": "Upload settings"
     },
     {
-      "permissionName": "settings.entries.all",
+      "permissionName": "mod-settings.entries.all",
       "displayName": "settings - all setting permissions",
       "description": "All setting permissions",
       "subPermissions": [
-        "settings.entries.item.post",
-        "settings.entries.collection.get",
-        "settings.entries.item.get",
-        "settings.entries.item.put",
-        "settings.entries.item.delete",
-        "settings.entries.upload"
+        "mod-settings.entries.item.post",
+        "mod-settings.entries.collection.get",
+        "mod-settings.entries.item.get",
+        "mod-settings.entries.item.put",
+        "mod-settings.entries.item.delete",
+        "mod-settings.entries.upload"
       ]
     }
   ],

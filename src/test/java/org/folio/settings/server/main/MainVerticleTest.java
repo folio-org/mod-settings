@@ -35,8 +35,8 @@ public class MainVerticleTest extends TestBase {
         .put("scope", UUID.randomUUID().toString())
         .put("key", "k1")
         .put("value", new JsonObject().put("v", "thevalue"));
-    JsonArray permRead = new JsonArray().add("settings.global.read." + en.getString("scope"));
-    JsonArray permWrite = new JsonArray().add("settings.global.write." + en.getString("scope"));
+    JsonArray permRead = new JsonArray().add("mod-settings.global.read." + en.getString("scope"));
+    JsonArray permWrite = new JsonArray().add("mod-settings.global.write." + en.getString("scope"));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -73,8 +73,8 @@ public class MainVerticleTest extends TestBase {
         .put("userId", UUID.randomUUID().toString())
         .put("value", new JsonObject().put("v", "thevalue"));
 
-    JsonArray permRead = new JsonArray().add("settings.users.read." + en.getString("scope"));
-    JsonArray permWrite = new JsonArray().add("settings.users.write." + en.getString("scope"));
+    JsonArray permRead = new JsonArray().add("mod-settings.users.read." + en.getString("scope"));
+    JsonArray permWrite = new JsonArray().add("mod-settings.users.write." + en.getString("scope"));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -109,7 +109,7 @@ public class MainVerticleTest extends TestBase {
         .put("scope", UUID.randomUUID().toString())
         .put("key", "k1")
         .put("value", new JsonObject().put("v", "thevalue"));
-    JsonArray permWrite = new JsonArray().add("settings.global.write." + en.getString("scope"));
+    JsonArray permWrite = new JsonArray().add("mod-settings.global.write." + en.getString("scope"));
 
     RestAssured.given()
         .baseUri(MODULE_URL)  // if not, Okapi will intercept
@@ -158,7 +158,7 @@ public class MainVerticleTest extends TestBase {
         .put("scope", UUID.randomUUID().toString())
         .put("key", "k1")
         .put("value", new JsonObject().put("v", "thevalue"));
-    JsonArray permWrite = new JsonArray().add("settings.global.write." + en.getString("scope"));
+    JsonArray permWrite = new JsonArray().add("mod-settings.global.write." + en.getString("scope"));
 
     RestAssured.given()
         .baseUri(MODULE_URL)  // if not, Okapi will intercept
@@ -180,7 +180,7 @@ public class MainVerticleTest extends TestBase {
         .put("scope", UUID.randomUUID().toString())
         .put("key", "k1")
         .put("value", new JsonObject().put("v", "x".repeat(SettingsService.BODY_LIMIT)));
-    JsonArray permWrite = new JsonArray().add("settings.global.write." + en.getString("scope"));
+    JsonArray permWrite = new JsonArray().add("mod-settings.global.write." + en.getString("scope"));
 
     RestAssured.given()
         .baseUri(MODULE_URL)  // if not, Okapi will intercept
@@ -202,8 +202,8 @@ public class MainVerticleTest extends TestBase {
         .put("key", "k1")
         .put("value", new JsonObject().put("v", "thevalue"));
 
-    JsonArray permRead = new JsonArray().add("settings.global.read." + en.getString("scope"));
-    JsonArray permWrite = new JsonArray().add("settings.global.write." + en.getString("scope"));
+    JsonArray permRead = new JsonArray().add("mod-settings.global.read." + en.getString("scope"));
+    JsonArray permWrite = new JsonArray().add("mod-settings.global.write." + en.getString("scope"));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -268,7 +268,7 @@ public class MainVerticleTest extends TestBase {
         .put("scope", UUID.randomUUID().toString())
         .put("key", "k1")
         .put("value", new JsonObject().put("v", "thevalue"));
-    JsonArray permWrite = new JsonArray().add("settings.global.write." + en.getString("scope"));
+    JsonArray permWrite = new JsonArray().add("mod-settings.global.write." + en.getString("scope"));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -288,8 +288,8 @@ public class MainVerticleTest extends TestBase {
         .put("key", "k1")
         .put("value", new JsonObject().put("v", "thevalue"));
 
-    JsonArray permWrite = new JsonArray().add("settings.global.write." + en1.getString("scope"));
-    JsonArray permRead = new JsonArray().add("settings.global.read." + en1.getString("scope"));
+    JsonArray permWrite = new JsonArray().add("mod-settings.global.write." + en1.getString("scope"));
+    JsonArray permRead = new JsonArray().add("mod-settings.global.read." + en1.getString("scope"));
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
@@ -340,8 +340,8 @@ public class MainVerticleTest extends TestBase {
         .put("userId", UUID.randomUUID().toString())
         .put("value", new JsonObject().put("v", "thevalue"));
 
-    JsonArray permWrite = new JsonArray().add("settings.users.write." + en1.getString("scope"));
-    JsonArray permRead = new JsonArray().add("settings.users.read." + en1.getString("scope"));
+    JsonArray permWrite = new JsonArray().add("mod-settings.users.write." + en1.getString("scope"));
+    JsonArray permRead = new JsonArray().add("mod-settings.users.read." + en1.getString("scope"));
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
@@ -392,8 +392,8 @@ public class MainVerticleTest extends TestBase {
         .put("userId", UUID.randomUUID().toString())
         .put("value", new JsonObject().put("v", "thevalue"));
 
-    JsonArray permWrite = new JsonArray().add("settings.users.write." + en1.getString("scope"));
-    JsonArray permRead = new JsonArray().add("settings.users.read." + en1.getString("scope"));
+    JsonArray permWrite = new JsonArray().add("mod-settings.users.write." + en1.getString("scope"));
+    JsonArray permRead = new JsonArray().add("mod-settings.users.read." + en1.getString("scope"));
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
@@ -445,7 +445,7 @@ public class MainVerticleTest extends TestBase {
         .put("userId", UUID.randomUUID().toString())
         .put("value", new JsonObject().put("v", "thevalue"));
 
-    JsonArray permWrite = new JsonArray().add("settings.users.write." + en.getString("scope"));
+    JsonArray permWrite = new JsonArray().add("mod-settings.users.write." + en.getString("scope"));
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
@@ -482,8 +482,8 @@ public class MainVerticleTest extends TestBase {
         .put("userId", UUID.randomUUID().toString())
         .put("value", new JsonObject().put("v", "thevalue"));
 
-    JsonArray permWrite = new JsonArray().add("settings.users.write." + en1.getString("scope"));
-    JsonArray permRead = new JsonArray().add("settings.users.read." + en1.getString("scope"));
+    JsonArray permWrite = new JsonArray().add("mod-settings.users.write." + en1.getString("scope"));
+    JsonArray permRead = new JsonArray().add("mod-settings.users.read." + en1.getString("scope"));
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
@@ -525,7 +525,7 @@ public class MainVerticleTest extends TestBase {
         .put("userId", UUID.randomUUID().toString())
         .put("value", new JsonObject().put("v", "thevalue"));
 
-    JsonArray permWrite = new JsonArray().add("settings.users.write." + en1.getString("scope"));
+    JsonArray permWrite = new JsonArray().add("mod-settings.users.write." + en1.getString("scope"));
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
@@ -573,7 +573,7 @@ public class MainVerticleTest extends TestBase {
         .put("userId", UUID.randomUUID().toString())
         .put("value", new JsonObject().put("v", "thevalue"));
 
-    JsonArray permWrite = new JsonArray().add("settings.owner.write." + en1.getString("scope"));
+    JsonArray permWrite = new JsonArray().add("mod-settings.owner.write." + en1.getString("scope"));
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
@@ -599,8 +599,8 @@ public class MainVerticleTest extends TestBase {
     JsonObject en = new JsonObject()
         .put("scope", UUID.randomUUID().toString())
         .put("value", new JsonObject().put("v", "thevalue"));
-    JsonArray permGlobalWrite = new JsonArray().add("settings.global.write." + en.getString("scope"));
-    JsonArray permGlobalRead = new JsonArray().add("settings.global.read." + en.getString("scope"));
+    JsonArray permGlobalWrite = new JsonArray().add("mod-settings.global.write." + en.getString("scope"));
+    JsonArray permGlobalRead = new JsonArray().add("mod-settings.global.read." + en.getString("scope"));
     for (int i = 0; i < 15; i++) {
       en
           .put("id", UUID.randomUUID().toString())
@@ -618,8 +618,8 @@ public class MainVerticleTest extends TestBase {
     JsonObject en2 = new JsonObject()
         .put("scope", en.getString("scope"))
         .put("value", new JsonObject().put("v", "thevalue"));
-    JsonArray permUsersWrite = new JsonArray().add("settings.users.write." + en.getString("scope"));
-    JsonArray permUsersRead = new JsonArray().add("settings.users.read." + en.getString("scope"));
+    JsonArray permUsersWrite = new JsonArray().add("mod-settings.users.write." + en.getString("scope"));
+    JsonArray permUsersRead = new JsonArray().add("mod-settings.users.read." + en.getString("scope"));
     for (int i = 0; i < 3; i++) {
       en2
           .put("id", UUID.randomUUID().toString())
@@ -639,8 +639,8 @@ public class MainVerticleTest extends TestBase {
     JsonObject en3 = new JsonObject()
         .put("scope", en.getString("scope"))
         .put("value", new JsonObject().put("v", "thevalue"));
-    JsonArray permOwnerWrite = new JsonArray().add("settings.owner.write." + en.getString("scope"));
-    JsonArray permOwnerRead = new JsonArray().add("settings.owner.read." + en.getString("scope"));
+    JsonArray permOwnerWrite = new JsonArray().add("mod-settings.owner.write." + en.getString("scope"));
+    JsonArray permOwnerRead = new JsonArray().add("mod-settings.owner.read." + en.getString("scope"));
     for (int i = 0; i < 2; i++) {
       en3
           .put("id", UUID.randomUUID().toString())
@@ -747,8 +747,8 @@ public class MainVerticleTest extends TestBase {
   public void testUploadFailures() {
     String scope = UUID.randomUUID().toString();
     UUID userId = UUID.randomUUID();
-    JsonArray permissionsLacking = new JsonArray().add("settings.owner.write.other");
-    JsonArray permOwnerWrite = new JsonArray().add("settings.owner.write." + scope);
+    JsonArray permissionsLacking = new JsonArray().add("mod-settings.owner.write.other");
+    JsonArray permOwnerWrite = new JsonArray().add("mod-settings.owner.write." + scope);
     int no = 3;
     JsonArray ar = new JsonArray();
     for (int i = 0; i < no; i++) {
@@ -844,7 +844,7 @@ public class MainVerticleTest extends TestBase {
   public void uploadIdMustNotBeSupplied() {
     String scope = UUID.randomUUID().toString();
     UUID userId = UUID.randomUUID();
-    JsonArray permOwnerWrite = new JsonArray().add("settings.owner.write." + scope);
+    JsonArray permOwnerWrite = new JsonArray().add("mod-settings.owner.write." + scope);
     int no = 2;
     JsonArray ar = new JsonArray();
     for (int i = 0; i < no; i++) {
@@ -873,8 +873,8 @@ public class MainVerticleTest extends TestBase {
   public void testUploadOK() {
     String scope = UUID.randomUUID().toString();
     UUID userId = UUID.randomUUID();
-    JsonArray permOwnerWrite = new JsonArray().add("settings.owner.write." + scope);
-    JsonArray permOwnerRead = new JsonArray().add("settings.owner.read." + scope);
+    JsonArray permOwnerWrite = new JsonArray().add("mod-settings.owner.write." + scope);
+    JsonArray permOwnerRead = new JsonArray().add("mod-settings.owner.read." + scope);
     int no = 100;
     JsonArray ar = new JsonArray();
     for (int i = 0; i < no; i++) {

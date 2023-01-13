@@ -33,19 +33,19 @@ and userId.
 Settings are protected by permissions.
 
 In order to write to a global setting, the client must have permission
-`settings.global.write.`scope, where scope is used in the setting.
+`mod-settings.global.write.`scope, where scope is used in the setting.
 To read this type of setting, the client must have
-`settings.global.read.`scope.
+`mod-settings.global.read.`scope.
 
 In order to write to a setting with any userId, which we call a user
-setting, the client must have permission `settings.users.write.`scope ,
+setting, the client must have permission `mod-settings.users.write.`scope ,
 where scope is used in the setting. To read this type of setting,
-the client must have `settings.users.read.`scope.
+the client must have `mod-settings.users.read.`scope.
 
 In order to write to user's own setting, the client must have permission
-`settings.owner.write.`scope, where scope is used in the setting.
+`mod-settings.owner.write.`scope, where scope is used in the setting.
 To read this type of setting, the client must have
-`settings.owner.read.`scope.
+`mod-settings.owner.read.`scope.
 
 With 'read' in this context we mean able to read the content of
 the setting. With 'write' in this context we modify storage
@@ -77,7 +77,8 @@ Get a list of settings [with](https://s3.amazonaws.com/foliodocs/api/mod-setting
     GET /settings/entries
 
 The latter takes optional `query`, `limit`, `offset` parameters.
-Query is expressed in Contextual Query Language ([CQL](https://dev.folio.org/reference/glossary/#cql))
+Query is expressed in Contextual Query Language
+([CQL](https://dev.folio.org/reference/glossary/#cql))
 and supports queries on the `id`, `scope`,
 `key` and `userId` fields. Query terms can mostly only be used in
 exact-value matching: the exception is that the key field supports
@@ -87,14 +88,16 @@ entries in the `foo` scope that begin with `bar`.
 The GET operations are "read" operations. The entries returned
 are limited by client permissions.
 
-Update a setting [with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/putSetting):
+Update a setting
+[with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/putSetting):
 
     PUT /settings/entries/{id}
 
 This returns 204 if the setting was updated. This is strictly "write", i.e.
 does not return the newly modified setting.
 
-Delete a setting [with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/deleteSetting):
+Delete a setting
+[with](https://s3.amazonaws.com/foliodocs/api/mod-settings/settings.html#operation/deleteSetting):
 
     DELETE /settings/entries/{id}
 
@@ -174,7 +177,8 @@ the DB and may be only available in Docker Desktop.
 If it's not defined you can specify it by passing
 `--add-host=host.docker.internal:<docker bridge net IP>` to the run command.
 
-**Note**: Those docker build and run commands do work as-is with [Colima](https://github.com/abiosoft/colima).
+**Note**: Those docker build and run commands do work as-is with
+[Colima](https://github.com/abiosoft/colima).
 
 ## Additional information
 
@@ -185,7 +189,8 @@ at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker).
 
 ### Code of Conduct
 
-Refer to the Wiki [FOLIO Code of Conduct](https://wiki.folio.org/display/COMMUNITY/FOLIO+Code+of+Conduct).
+Refer to the Wiki
+[FOLIO Code of Conduct](https://wiki.folio.org/display/COMMUNITY/FOLIO+Code+of+Conduct).
 
 ### ModuleDescriptor
 
