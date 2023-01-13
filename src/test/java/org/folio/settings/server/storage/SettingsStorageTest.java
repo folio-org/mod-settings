@@ -18,15 +18,15 @@ public class SettingsStorageTest {
         .add("a")
         .add(1)
         .add("other.global.read.scope")
-        .add("settings.global.write.scope")
+        .add("mod-settings.global.write.scope")
         .add("settings")
-        .add("settings.")
-        .add("settings.global")
-        .add("settings.global.")
-        .add("settings.global.read")
-        .add("settings.global.read.")
-        .add("settings.x.read.scope")
-        .add("settings.others.read.scope");
+        .add("mod-settings.")
+        .add("mod-settings.global")
+        .add("mod-settings.global.")
+        .add("mod-settings.global.read")
+        .add("mod-settings.global.read.")
+        .add("mod-settings.x.read.scope")
+        .add("mod-settings.others.read.scope");
     assertThat(SettingsStorage.getCqlLimitPermissions(perms, null), is(empty()));
   }
 
@@ -34,8 +34,8 @@ public class SettingsStorageTest {
   public void getLimitsFromGlobal() {
     JsonArray perms = new JsonArray()
         .add("a")
-        .add("settings.global.write.s1")
-        .add("settings.global.read.s1.t1");
+        .add("mod-settings.global.write.s1")
+        .add("mod-settings.global.read.s1.t1");
     assertThat(SettingsStorage.getCqlLimitPermissions(perms, null),
         contains("(scope == \"s1.t1\" and userId <> \"\")"));
   }
@@ -43,7 +43,7 @@ public class SettingsStorageTest {
   @Test
   public void getLimitsFromUsers() {
     JsonArray perms = new JsonArray()
-        .add("settings.users.read.s1");
+        .add("mod-settings.users.read.s1");
     assertThat(SettingsStorage.getCqlLimitPermissions(perms, null),
         contains("(scope == \"s1\" and userId = \"\")"));
   }
@@ -51,7 +51,7 @@ public class SettingsStorageTest {
   @Test
   public void getLimitsFromOwn() {
     JsonArray perms = new JsonArray()
-        .add("settings.owner.read.s1");
+        .add("mod-settings.owner.read.s1");
     assertThat(SettingsStorage.getCqlLimitPermissions(perms, null), is(empty()));
     UUID myId = UUID.randomUUID();
     assertThat(SettingsStorage.getCqlLimitPermissions(perms, myId),
@@ -61,8 +61,8 @@ public class SettingsStorageTest {
   @Test
   public void getLimitsMix1() {
     JsonArray perms = new JsonArray()
-        .add("settings.owner.read.s1")
-        .add("settings.global.read.s2");
+        .add("mod-settings.owner.read.s1")
+        .add("mod-settings.global.read.s2");
     UUID myId = UUID.randomUUID();
     assertThat(SettingsStorage.getCqlLimitPermissions(perms, myId),
         containsInAnyOrder(
@@ -74,8 +74,8 @@ public class SettingsStorageTest {
   @Test
   public void getLimitsMix2() {
     JsonArray perms = new JsonArray()
-        .add("settings.owner.read.s1")
-        .add("settings.global.read.s1");
+        .add("mod-settings.owner.read.s1")
+        .add("mod-settings.global.read.s1");
     UUID myId = UUID.randomUUID();
     assertThat(SettingsStorage.getCqlLimitPermissions(perms, myId),
         contains(
@@ -88,8 +88,8 @@ public class SettingsStorageTest {
   @Test
   public void getLimitsMix3() {
     JsonArray perms = new JsonArray()
-        .add("settings.users.read.s1")
-        .add("settings.global.read.s1");
+        .add("mod-settings.users.read.s1")
+        .add("mod-settings.global.read.s1");
     assertThat(SettingsStorage.getCqlLimitPermissions(perms, null),
         contains("scope == \"s1\""));
   }

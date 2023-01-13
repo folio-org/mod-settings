@@ -36,7 +36,7 @@ public class SettingsStorage {
 
   private static final String CREATE_IF_NO_EXISTS = "CREATE TABLE IF NOT EXISTS ";
 
-  private static final String PERM_PREFIX = "settings";
+  private static final String PERM_PREFIX = "mod-settings";
   private static final String PERM_USERS = "users";
   private static final String PERM_GLOBAL = "global";
   private static final String PERM_OWNER = "owner";

@@ -137,27 +137,27 @@ cat >md.json <<END
    "provides": [],
    "permissionSets": [
     {
-      "permissionName": "settings.global.read.gscope",
+      "permissionName": "mod-settings.global.read.gscope",
       "displayName": "gscope: global read"
     },
     {
-      "permissionName": "settings.global.write.gscope",
+      "permissionName": "mod-settings.global.write.gscope",
       "displayName": "gscope: global write"
     },
     {
-      "permissionName": "settings.owner.read.oscope",
+      "permissionName": "mod-settings.owner.read.oscope",
       "displayName": "oscope: owner read"
     },
     {
-      "permissionName": "settings.owner.write.oscope",
+      "permissionName": "mod-settings.owner.write.oscope",
       "displayName": "oscope: owner write"
     },
     {
-      "permissionName": "settings.user.read.uscope",
+      "permissionName": "mod-settings.user.read.uscope",
       "displayName": "uscope: user read"
     },
     {
-      "permissionName": "settings.user.write.uscope",
+      "permissionName": "mod-settings.user.write.uscope",
       "displayName": "uscope: user write"
     }
    ]
@@ -169,11 +169,11 @@ okapi_curl $token -d@md.json $U/_/proxy/modules
 install_modules $token enable "mod-use-settings"
 
 echo "Adding permissions to puid=$puid"
-okapi_curl $token -d'{"permissionName":"settings.entries.all"}' $U/perms/users/$puid/permissions
-okapi_curl $token -d'{"permissionName":"settings.global.write.gscope"}' $U/perms/users/$puid/permissions
-okapi_curl $token -d'{"permissionName":"settings.global.read.gscope"}' $U/perms/users/$puid/permissions
-okapi_curl $token -d'{"permissionName":"settings.owner.write.oscope"}' $U/perms/users/$puid/permissions
-okapi_curl $token -d'{"permissionName":"settings.owner.read.oscope"}' $U/perms/users/$puid/permissions
+okapi_curl $token -d'{"permissionName":"mod-settings.entries.all"}' $U/perms/users/$puid/permissions
+okapi_curl $token -d'{"permissionName":"mod-settings.global.write.gscope"}' $U/perms/users/$puid/permissions
+okapi_curl $token -d'{"permissionName":"mod-settings.global.read.gscope"}' $U/perms/users/$puid/permissions
+okapi_curl $token -d'{"permissionName":"mod-settings.owner.write.oscope"}' $U/perms/users/$puid/permissions
+okapi_curl $token -d'{"permissionName":"mod-settings.owner.read.oscope"}' $U/perms/users/$puid/permissions
 
 echo "puid=$puid"
 echo "uid=$uid"
