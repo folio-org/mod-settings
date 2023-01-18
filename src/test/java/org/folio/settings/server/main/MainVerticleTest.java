@@ -29,43 +29,8 @@ public class MainVerticleTest extends TestBase {
   }
 
   @Test
-  public void testCrudGlobalOkString() {
-    JsonObject en = new JsonObject()
-        .put("id", UUID.randomUUID().toString())
-        .put("scope", UUID.randomUUID().toString())
-        .put("key", "k1")
-        .put("value", "stringvalue");
-    JsonArray permRead = new JsonArray().add("mod-settings.global.read." + en.getString("scope"));
-    JsonArray permWrite = new JsonArray().add("mod-settings.global.write." + en.getString("scope"));
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, TENANT_1)
-        .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
-        .contentType(ContentType.JSON)
-        .body(en.encode())
-        .post("/settings/entries")
-        .then()
-        .statusCode(204);
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, TENANT_1)
-        .header(XOkapiHeaders.PERMISSIONS, permRead.encode())
-        .get("/settings/entries/" + en.getString("id"))
-        .then()
-        .statusCode(200)
-        .contentType(ContentType.JSON)
-        .body(is(en.encode()));
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, TENANT_1)
-        .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
-        .delete("/settings/entries/" + en.getString("id"))
-        .then()
-        .statusCode(204);
-  }
-
-  @Test
   public void testCrudGlobalOk() {
+    // values that we store and retrieve
     JsonArray ar = new JsonArray()
         .add("simple")
         .add(new JsonObject().put("key", "k1"))
