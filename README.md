@@ -20,7 +20,7 @@ A setting consists of these required properties
 * `id`: unique identifier (UUID)
 * `scope`: it is a namespace for the setting. This could be module
 * `key`: a readable identifier; not necessarily for display
-* `value`: a JSON object
+* `value`: any type (integer, string, object, array)
 
 And optionally:
 

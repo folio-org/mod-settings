@@ -16,8 +16,7 @@
       "description": "Key within scope for this setting"
     },
     "value": {
-      "type": "object",
-      "description": "Settings value"
+      "description": "Settings value (any type)"
     },
     "userId": {
       "type": "string",

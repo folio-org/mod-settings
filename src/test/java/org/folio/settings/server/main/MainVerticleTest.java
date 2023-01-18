@@ -30,76 +30,47 @@ public class MainVerticleTest extends TestBase {
 
   @Test
   public void testCrudGlobalOk() {
-    JsonObject en = new JsonObject()
-        .put("id", UUID.randomUUID().toString())
-        .put("scope", UUID.randomUUID().toString())
-        .put("key", "k1")
-        .put("value", new JsonObject().put("v", "thevalue"));
-    JsonArray permRead = new JsonArray().add("mod-settings.global.read." + en.getString("scope"));
-    JsonArray permWrite = new JsonArray().add("mod-settings.global.write." + en.getString("scope"));
+    // values that we store and retrieve
+    JsonArray ar = new JsonArray()
+        .add("simple")
+        .add(new JsonObject().put("key", "k1"))
+        .add(new JsonArray().add("1").add("2"))
+        .add(234);
 
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, TENANT_1)
-        .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
-        .contentType(ContentType.JSON)
-        .body(en.encode())
-        .post("/settings/entries")
-        .then()
-        .statusCode(204);
+    for (int i = 0; i < ar.size(); i++) {
+      JsonObject en = new JsonObject()
+          .put("id", UUID.randomUUID().toString())
+          .put("scope", UUID.randomUUID().toString())
+          .put("key", "k1")
+          .put("value", ar.getValue(i));
+      JsonArray permRead = new JsonArray().add("mod-settings.global.read." + en.getString("scope"));
+      JsonArray permWrite = new JsonArray().add("mod-settings.global.write." + en.getString("scope"));
 
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, TENANT_1)
-        .header(XOkapiHeaders.PERMISSIONS, permRead.encode())
-        .get("/settings/entries/" + en.getString("id"))
-        .then()
-        .statusCode(200)
-        .contentType(ContentType.JSON)
-        .body(is(en.encode()));
+      RestAssured.given()
+          .header(XOkapiHeaders.TENANT, TENANT_1)
+          .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
+          .contentType(ContentType.JSON)
+          .body(en.encode())
+          .post("/settings/entries")
+          .then()
+          .statusCode(204);
 
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, TENANT_1)
-        .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
-        .delete("/settings/entries/" + en.getString("id"))
-        .then()
-        .statusCode(204);
-  }
+      RestAssured.given()
+          .header(XOkapiHeaders.TENANT, TENANT_1)
+          .header(XOkapiHeaders.PERMISSIONS, permRead.encode())
+          .get("/settings/entries/" + en.getString("id"))
+          .then()
+          .statusCode(200)
+          .contentType(ContentType.JSON)
+          .body(is(en.encode()));
 
-  @Test
-  public void testCrudUsersOk() {
-    JsonObject en = new JsonObject()
-        .put("id", UUID.randomUUID().toString())
-        .put("scope", UUID.randomUUID().toString())
-        .put("key", "k1")
-        .put("userId", UUID.randomUUID().toString())
-        .put("value", new JsonObject().put("v", "thevalue"));
-
-    JsonArray permRead = new JsonArray().add("mod-settings.users.read." + en.getString("scope"));
-    JsonArray permWrite = new JsonArray().add("mod-settings.users.write." + en.getString("scope"));
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, TENANT_1)
-        .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
-        .contentType(ContentType.JSON)
-        .body(en.encode())
-        .post("/settings/entries")
-        .then()
-        .statusCode(204);
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, TENANT_1)
-        .header(XOkapiHeaders.PERMISSIONS, permRead.encode())
-        .get("/settings/entries/" + en.getString("id"))
-        .then()
-        .statusCode(200)
-        .contentType(ContentType.JSON)
-        .body(is(en.encode()));
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, TENANT_1)
-        .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
-        .delete("/settings/entries/" + en.getString("id"))
-        .then()
-        .statusCode(204);
+      RestAssured.given()
+          .header(XOkapiHeaders.TENANT, TENANT_1)
+          .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
+          .delete("/settings/entries/" + en.getString("id"))
+          .then()
+          .statusCode(204);
+    }
   }
 
   @Test
@@ -853,7 +824,7 @@ public class MainVerticleTest extends TestBase {
           .put("scope", scope)
           .put("key", "k" + i)
           .put("userId", userId.toString())
-          .put("value", new JsonObject().put("v", "thevalue"));
+          .put("value", "thevalue");
       ar.add(en);
     }
     RestAssured.given()
@@ -882,7 +853,7 @@ public class MainVerticleTest extends TestBase {
           .put("scope", scope)
           .put("key", "k" + i)
           .put("userId", userId.toString())
-          .put("value", new JsonObject().put("v", "s".repeat(1000)));
+          .put("value", "s".repeat(1000));
       ar.add(en);
     }
     RestAssured.given()
