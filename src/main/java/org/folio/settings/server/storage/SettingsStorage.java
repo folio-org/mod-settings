@@ -85,9 +85,9 @@ public class SettingsStorage {
             + ")",
         // need two as userId = NULL would be considered unique
         "CREATE UNIQUE INDEX IF NOT EXISTS settings_scope_key_users ON "
-            + settingsTable + "(scope, key, userId) WHERE userId is NOT NULL",
+            + settingsTable + "(scope, key text_pattern_ops, userId) WHERE userId is NOT NULL",
         "CREATE UNIQUE INDEX IF NOT EXISTS settings_scope_key_global ON "
-            + settingsTable + "(scope, key) WHERE userId is NULL"
+            + settingsTable + "(scope, key text_pattern_ops) WHERE userId is NULL"
     ));
   }
 
@@ -143,10 +143,10 @@ public class SettingsStorage {
         if (rights.contains(PERM_USERS)) {
           queryLimits.add(scopeEq);
         } else if (rights.contains(PERM_OWNER) && currentUser != null) {
-          queryLimits.add("(" + scopeEq
-              + " and (userId <> \"\" or userId == \"" + currentUser + "\"))");
+          queryLimits.add("(" + scopeEq + " not userId = \"\")");
+          queryLimits.add("(" + scopeEq + " and userId == \"" + currentUser + "\")");
         } else {
-          queryLimits.add("(" + scopeEq + " and userId <> \"\")");
+          queryLimits.add("(" + scopeEq + " not userId = \"\")");
         }
       } else {
         if (rights.contains(PERM_USERS)) {
@@ -341,8 +341,8 @@ public class SettingsStorage {
 
     PgCqlDefinition definition = PgCqlDefinition.create();
     definition.addField("id", new PgCqlFieldUuid());
-    definition.addField("scope", new PgCqlFieldText());
-    definition.addField("key", new PgCqlFieldText());
+    definition.addField("scope", new PgCqlFieldText().withExact());
+    definition.addField("key", new PgCqlFieldText().withLikeOps());
     definition.addField("userId", new PgCqlFieldUuid());
 
     PgCqlQuery pgCqlQuery = definition.parse(cqlQuery, joinedCql);
