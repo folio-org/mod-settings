@@ -9,8 +9,9 @@
     * [4. Change the WSAPI path](#4-change-the-wsapi-path)
     * [5. Change the entry parameters](#5-change-the-entry-parameters)
     * [6. Consider how to port existing configuration entries](#6-consider-how-to-port-existing-configuration-entries)
-* [Appendix A. Cross-cutting uses of mod-configuration](#appendix-a-cross-cutting-uses-of-mod-configuration)
-* [Appendix B. Towards deprecating mod-configuration](#appendix-b-towards-deprecating-mod-configuration)
+* [Appendix A. The example of ui-ldp](#appendix-a-the-example-of-ui-ldp)
+* [Appendix B. Cross-cutting uses of mod-configuration](#appendix-b-cross-cutting-uses-of-mod-configuration)
+* [Appendix C. Towards deprecating mod-configuration](#appendix-c-towards-deprecating-mod-configuration)
 
 
 
@@ -103,7 +104,19 @@ It may be worthwhile to create a configurable entry-porting tool.
 
 
 
-## Appendix A. Cross-cutting uses of mod-configuration
+## Appendix A. The example of ui-ldp
+
+To make the above more concrete, here are the steps taken to use mod-settings by the LDP app.
+
+* The package file defines [four permissions](https://github.com/folio-org/ui-ldp/blob/1e3cdaa2fd0582ab3116499978d6f331a18e97ba/package.json#L176-L195): read and write for each of two scopes, which are named `ui-ldp.admin` (for setting things like the default number of records requested) and `ui-ldp.queries` (for loading and saving queries).
+* The settings page that maintains record-limits does so by invoking `<ConfigManager>` with `scope="ui-ldp.admin"` and `configName="config"` — [the invocation](https://github.com/folio-org/ui-ldp/blob/1e3cdaa2fd0582ab3116499978d6f331a18e97ba/src/settings/RecordLimits.js#L47-L54) works because that component has been extended to work with mod-settings as well as mod-configuration.
+* Those settings [are loaded](https://github.com/folio-org/ui-ldp/blob/1e3cdaa2fd0582ab3116499978d6f331a18e97ba/src/util/loadConfig.js#L21-L22) by fetching `/settings/entries?query=(scope=="ui-ldp.admin" and key=="config")`.
+* A query [is saved](https://github.com/folio-org/ui-ldp/blob/1e3cdaa2fd0582ab3116499978d6f331a18e97ba/src/components/QueryBuilder/SaveQueryModal.js#L39-L47) by POSTing (for a new query) or PUTting (to overwrite an existing one) to `/settings/entries` a settings record that has `scope: 'ui-ldp.queries'`}.
+* Saved queries [are loaded](https://github.com/folio-org/ui-ldp/blob/1e3cdaa2fd0582ab3116499978d6f331a18e97ba/src/components/SavedQueries/SavedQueries.js#L17-L20) by fetching `/settings/entries?query=scope=="ui-ldp.queries"`
+
+
+
+## Appendix B. Cross-cutting uses of mod-configuration
 
 A brief investigation of client-side utilities shows that data from mod-configuration is used in at least two places:
 * [Tags](https://github.com/folio-org/stripes-smart-components/tree/master/lib/Tags) are enabled or disabled [according to a mod-configuration setting](https://github.com/folio-org/stripes-smart-components/blob/b610b3b04c7db137489e59b9de18a30ea41dd821/lib/Tags/withTags.js#L11).
@@ -112,7 +125,8 @@ A brief investigation of client-side utilities shows that data from mod-configur
 In due time, we will want to update both of these to use mod-settings.
 
 
-## Appendix B. Towards deprecating mod-configuration
+
+## Appendix C. Towards deprecating mod-configuration
 
 This document explains _how_ to port a FOLIO module from mod-configuration to mod-settings, but we also need to consider the broader issues of _whether_ and _when_ to do so.
 
