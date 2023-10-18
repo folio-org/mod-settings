@@ -76,7 +76,7 @@ Get a list of settings [with](https://s3.amazonaws.com/foliodocs/api/mod-setting
 
     GET /settings/entries
 
-The latter takes optional `query`, `limit`, `offset` parameters.
+The latter takes optional `query`, `limit` (default 10), `offset` (default 0) parameters.
 Query is expressed in Contextual Query Language
 ([CQL](https://dev.folio.org/reference/glossary/#cql))
 and supports queries on the `id`, `scope`,
