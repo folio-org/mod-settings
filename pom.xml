@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-settings</artifactId>
-  <version>1.0.3</version>
+  <version>1.0.4-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>mod-settings</name>
@@ -17,7 +17,7 @@
     <url>https://github.com/folio-org/mod-settings</url>
     <connection>scm:git:git://github.com/folio-org/mod-settings.git</connection>
     <developerConnection>scm:git:git@github.com:folio-org/mod-settings.git</developerConnection>
-    <tag>v1.0.3</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <licenses>
