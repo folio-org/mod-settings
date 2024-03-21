@@ -1,3 +1,6 @@
+##
+* Update vertx dependencies to 4.5.3
+
 ## 1.0.2 2024-12-06
 * Update library dependencies
 
