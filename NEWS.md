@@ -1,3 +1,6 @@
+## 1.0.3 IN PROGRESS
+* Add new document [How to add new settings to the mod-settings module](doc/HOWTO.md). Fixes MODSET-18.
+
 ## 1.0.2 2024-12-06
 * Update library dependencies
 
