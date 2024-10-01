@@ -14,6 +14,7 @@ import io.vertx.ext.web.validation.RequestParameter;
 import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
 import java.util.UUID;
+import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.HttpResponse;
@@ -57,50 +58,43 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
   }
 
   void commonError(RoutingContext ctx, Throwable cause, int defaultCode) {
-    log.debug("commonError");
     if (cause == null) {
-      HttpResponse.responseError(ctx, defaultCode,
-          HttpResponseStatus.valueOf(defaultCode).reasonPhrase());
+      httpResponse(ctx, defaultCode, HttpResponseStatus.valueOf(defaultCode).reasonPhrase());
     } else if (cause instanceof ForbiddenException) {
-      HttpResponse.responseError(ctx, 403, cause.getMessage());
+      httpResponse(ctx, 403, cause.getMessage());
     } else if (cause instanceof NotFoundException) {
-      HttpResponse.responseError(ctx, 404, cause.getMessage());
+      httpResponse(ctx, 404, cause.getMessage());
     } else if (cause instanceof UserException) {
-      HttpResponse.responseError(ctx, 400, cause.getMessage());
+      httpResponse(ctx, 400, cause.getMessage());
     } else {
-      HttpResponse.responseError(ctx, defaultCode, cause.getMessage());
+      httpResponse(ctx, defaultCode, cause);
     }
   }
 
+  void httpResponse(RoutingContext ctx, int code, String message) {
+    log.error("{} {} {}", ctx.request().method(), ctx.request().path(), message);
+    HttpResponse.responseError(ctx, code, message);
+  }
+
+  void httpResponse(RoutingContext ctx, int code, Throwable cause) {
+    log.error("{} {} {}", ctx.request().method(), ctx.request().path(), cause.getMessage(), cause);
+    HttpResponse.responseError(ctx, code, cause.getMessage());
+  }
+
   private void handlers(RouterBuilder routerBuilder) {
-    routerBuilder
-        .operation("getSettings")
-        .handler(ctx -> getSettings(ctx)
-            .onFailure(cause -> commonError(ctx, cause))
-        )
-        .failureHandler(this::failureHandler);
+    route(routerBuilder, "getSettings", this::getSettings);
+    route(routerBuilder, "postSetting", this::postSetting);
+    route(routerBuilder, "getSetting", this::getSetting);
+    route(routerBuilder, "putSetting", this::updateSetting);
+    route(routerBuilder, "deleteSetting", this::deleteSetting);
+  }
+
+  private void route(RouterBuilder routerBuilder,
+      String operationId, Function<RoutingContext, Future<Void>> function) {
 
     routerBuilder
-        .operation("postSetting")
-        .handler(ctx -> postSetting(ctx)
-            .onFailure(cause -> commonError(ctx, cause))
-        )
-        .failureHandler(this::failureHandler);
-    routerBuilder
-        .operation("getSetting")
-        .handler(ctx -> getSetting(ctx)
-            .onFailure(cause -> commonError(ctx, cause))
-        )
-        .failureHandler(this::failureHandler);
-    routerBuilder
-        .operation("putSetting")
-        .handler(ctx -> updateSetting(ctx)
-            .onFailure(cause -> commonError(ctx, cause))
-        )
-        .failureHandler(this::failureHandler);
-    routerBuilder
-        .operation("deleteSetting")
-        .handler(ctx -> deleteSetting(ctx)
+        .operation(operationId)
+        .handler(ctx -> function.apply(ctx)
             .onFailure(cause -> commonError(ctx, cause))
         )
         .failureHandler(this::failureHandler);
