@@ -734,6 +734,7 @@ public class MainVerticleTest extends TestBase {
         .put("value", new JsonObject().put("v", "stream"));
     JsonArray permGlobalWrite = new JsonArray().add("mod-settings.global.write." + en.getString("scope"));
     JsonArray permGlobalRead = new JsonArray().add("mod-settings.global.read." + en.getString("scope"));
+    // sqlStreamFetchSize = 100, use 2 * sqlStreamFetchSize + 1
     for (int i = 0; i < 201; i++) {
       en
           .put("id", UUID.randomUUID().toString())
