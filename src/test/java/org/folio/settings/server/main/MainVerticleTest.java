@@ -728,6 +728,39 @@ public class MainVerticleTest extends TestBase {
   }
 
   @Test
+  public void testGetSettingsStream() {
+    JsonObject en = new JsonObject()
+        .put("scope", UUID.randomUUID().toString())
+        .put("value", new JsonObject().put("v", "stream"));
+    JsonArray permGlobalWrite = new JsonArray().add("mod-settings.global.write." + en.getString("scope"));
+    JsonArray permGlobalRead = new JsonArray().add("mod-settings.global.read." + en.getString("scope"));
+    // sqlStreamFetchSize = 100, use 2 * sqlStreamFetchSize + 1
+    for (int i = 0; i < 201; i++) {
+      en
+          .put("id", UUID.randomUUID().toString())
+          .put("key", "s" + i);
+      RestAssured.given()
+          .header(XOkapiHeaders.TENANT, TENANT_1)
+          .header(XOkapiHeaders.PERMISSIONS, permGlobalWrite.encode())
+          .contentType(ContentType.JSON)
+          .body(en.encode())
+          .post("/settings/entries")
+          .then()
+          .statusCode(204);
+    }
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header(XOkapiHeaders.PERMISSIONS, permGlobalRead.encode())
+        .get("/settings/entries?limit=1000")
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("items", hasSize(201))
+        .body("resultInfo.totalRecords", is(201));
+  }
+
+  @Test
   public void testUploadFailures() {
     String scope = UUID.randomUUID().toString();
     UUID userId = UUID.randomUUID();
