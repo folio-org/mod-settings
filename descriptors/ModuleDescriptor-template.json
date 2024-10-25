@@ -24,7 +24,7 @@
     },
     {
       "id": "settings",
-      "version": "1.0",
+      "version": "1.1",
       "handlers": [
         {
           "methods": [
@@ -102,7 +102,7 @@
           ],
           "pathPattern": "/settings/upload",
           "permissionsRequired": [
-            "mod-settings.entries.upload"
+            "mod-settings.entries.put"
           ],
           "permissionsDesired": [
             "mod-settings.global.write.*",
@@ -141,9 +141,10 @@
       "description": "Delete setting"
     },
     {
-      "permissionName": "mod-settings.entries.upload",
+      "permissionName": "mod-settings.entries.put",
       "displayName": "settings - upload",
-      "description": "Upload settings"
+      "description": "Upload settings",
+      "replaces": [ "mod-settings.entries.upload" ]
     },
     {
       "permissionName": "mod-settings.entries.all",
@@ -155,7 +156,7 @@
         "mod-settings.entries.item.get",
         "mod-settings.entries.item.put",
         "mod-settings.entries.item.delete",
-        "mod-settings.entries.upload"
+        "mod-settings.entries.put"
       ]
     }
   ],
