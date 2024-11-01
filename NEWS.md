@@ -1,7 +1,11 @@
-## 1.0.3 IN PROGRESS
-* Update vertx dependencies to 4.5.3
-* Add new document [How to add new settings to the mod-settings module](doc/HOWTO.md). Fixes MODSET-18.
+## 1.1.0
 * Upgrade dependencies (folio-vertx-lib, ...) for Ramsons. [MODSET-22](https://folio-org.atlassian.net/browse/MODSET-22)
+* Add descriptor validator plugin. Change permission name to mod-settings.entries.put
+* [MODSET-17: Use .withTransaction, Promise and better logging](https://folio-org.atlassian.net/browse/MODSET-17)
+* Add new document [How to add new settings to the mod-settings module](doc/HOWTO.md). Fixes MODSET-18.
+
+## 1.0.3
+* [FOLIO-3944 Upgrade Actions for API-related Workflows](https://folio-org.atlassian.net/browse/FOLIO3-944)
 
 ## 1.0.2 2024-12-06
 * Update library dependencies
