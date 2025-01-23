@@ -3,6 +3,7 @@
 * Add descriptor validator plugin. Change permission name to mod-settings.entries.put
 * [MODSET-17: Use .withTransaction, Promise and better logging](https://folio-org.atlassian.net/browse/MODSET-17)
 * Add new document [How to add new settings to the mod-settings module](doc/HOWTO.md). Fixes MODSET-18.
+* Correctly document permission names. Fixes MODSET-27.
 
 ## 1.0.3
 * [FOLIO-3944 Upgrade Actions for API-related Workflows](https://folio-org.atlassian.net/browse/FOLIO3-944)
