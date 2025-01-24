@@ -1,0 +1,11 @@
+name: Maven central workflow
+
+on:
+  push:
+    branches: ['FOLIO-4126-maven-workflows-1']
+  workflow_dispatch:
+
+jobs:
+  maven:
+    uses: folio-org/.github/.github/workflows/maven.yml@FOLIO-4126-maven-workflows-1
+    secrets: inherit
