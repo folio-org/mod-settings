@@ -33,6 +33,7 @@ on:
   pull_request:
     paths:
       - 'src/main/resources/openapi/**'
+  workflow_dispatch:
 
 jobs:
   api-lint:
