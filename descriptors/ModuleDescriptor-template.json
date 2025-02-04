@@ -113,12 +113,7 @@
       ]
     }
   ],
-  "requires": [
-    {     
-      "id": "foobar",
-      "version": "1.0"
-    } 
-  ],
+  "requires": [],
   "permissionSets": [
     {
       "permissionName": "mod-settings.entries.item.post",
