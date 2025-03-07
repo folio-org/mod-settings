@@ -1,4 +1,4 @@
-FROM folioci/alpine-jre-openjdk17:latest
+FROM folioci/alpine-jre-openjdk21:latest
 
 ENV VERTICLE_FILE mod-settings-fat.jar
 
