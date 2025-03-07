@@ -101,18 +101,24 @@ public class SettingsStorage {
    * @return true if access is OK; false otherwise (forbidden)
    */
   static boolean checkDesiredPermissions(String type, JsonArray permissions,
-      Entry entry, UUID currentUser) {
+                                         Entry entry, UUID currentUser) {
     UUID userId = entry.getUserId();
     if (userId == null) {
       return permissions.contains(PERM_PREFIX + "." + PERM_GLOBAL + "."
-          + type + "." + entry.getScope());
+          + type + "." + entry.getScope())
+          || permissions.contains(PERM_PREFIX + "." + PERM_GLOBAL + "."
+          + entry.getScope() + "." + type);
     }
     if (permissions.contains(PERM_PREFIX + "." + PERM_USERS + "."
-        + type + "." + entry.getScope())) {
+        + type + "." + entry.getScope())
+        || permissions.contains(PERM_PREFIX + "." + PERM_USERS + "."
+        + entry.getScope() + "." + type)) {
       return true;
     }
-    return permissions.contains(PERM_PREFIX + "." + PERM_OWNER + "."
+    return (permissions.contains(PERM_PREFIX + "." + PERM_OWNER + "."
         + type + "." + entry.getScope())
+        || permissions.contains(PERM_PREFIX + "." + PERM_OWNER + "."
+        + entry.getScope() + "." + type))
         && currentUser != null && currentUser.equals(userId);
   }
 
