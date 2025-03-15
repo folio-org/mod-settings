@@ -2,7 +2,7 @@
 * Use correct permission names in doc/HOWTO.md. [MODSET-27](https://folio-org.atlassian.net/browse/MODSET-27)
 * Enable workflow\_dispatch for api. #44
 * Initial maven Workflow in-development. [FOLIO-4126](https://folio-org.atlassian.net/browse/FOLIO-4126)
-* Update to Java 21. Make permissions desired more permissive for format. [MODSET-26](ttps://folio-org.atlassian.net/browse/MODSET-26)
+* Update to Java 21. Make permissions desired more permissive for format. [MODSET-26](https://folio-org.atlassian.net/browse/MODSET-26)
 * apk upgrade in Dockerfile. [MODSET-29](https://folio-org.atlassian.net/browse/MODSET-29)
 * Update all dependencies for Sunflower (R1-2025). [MODSET-30](https://folio-org.atlassian.net/browse/MODSET-30)
 
