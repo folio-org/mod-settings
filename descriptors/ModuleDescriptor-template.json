@@ -24,7 +24,7 @@
     },
     {
       "id": "settings",
-      "version": "1.1",
+      "version": "1.2",
       "handlers": [
         {
           "methods": [
@@ -35,9 +35,9 @@
             "mod-settings.entries.item.post"
           ],
           "permissionsDesired": [
-            "mod-settings.global.write.*",
-            "mod-settings.users.write.*",
-            "mod-settings.owner.write.*"
+            "mod-settings.global.*",
+            "mod-settings.users.*",
+            "mod-settings.owner.*"
           ]
         },
         {
@@ -49,9 +49,9 @@
             "mod-settings.entries.collection.get"
           ],
           "permissionsDesired": [
-            "mod-settings.global.read.*",
-            "mod-settings.users.read.*",
-            "mod-settings.owner.read.*"
+            "mod-settings.global.*",
+            "mod-settings.users.*",
+            "mod-settings.owner.*"
           ]
         },
         {
@@ -63,9 +63,9 @@
             "mod-settings.entries.item.get"
           ],
           "permissionsDesired": [
-            "mod-settings.global.read.*",
-            "mod-settings.users.read.*",
-            "mod-settings.owner.read.*"
+            "mod-settings.global.*",
+            "mod-settings.users.*",
+            "mod-settings.owner.*"
           ]
         },
         {
@@ -77,9 +77,9 @@
             "mod-settings.entries.item.put"
           ],
           "permissionsDesired": [
-            "mod-settings.global.write.*",
-            "mod-settings.users.write.*",
-            "mod-settings.owner.write.*"
+            "mod-settings.global.*",
+            "mod-settings.users.*",
+            "mod-settings.owner.*"
           ]
         },
         {
@@ -91,9 +91,9 @@
             "mod-settings.entries.item.delete"
           ],
           "permissionsDesired": [
-            "mod-settings.global.write.*",
-            "mod-settings.users.write.*",
-            "mod-settings.owner.write.*"
+            "mod-settings.global.*",
+            "mod-settings.users.*",
+            "mod-settings.owner.*"
           ]
         },
         {
@@ -105,9 +105,9 @@
             "mod-settings.entries.put"
           ],
           "permissionsDesired": [
-            "mod-settings.global.write.*",
-            "mod-settings.users.write.*",
-            "mod-settings.owner.write.*"
+            "mod-settings.global.*",
+            "mod-settings.users.*",
+            "mod-settings.owner.*"
           ]
         }
       ]
