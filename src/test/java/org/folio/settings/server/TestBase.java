@@ -85,12 +85,31 @@ public class TestBase {
     f = f.compose(e -> vertx.deployVerticle(new org.folio.okapi.MainVerticle(), okapiOptions))
         .mapEmpty();
 
-    String md = Files.readString(Path.of("descriptors/ModuleDescriptor-template.json"))
-        .replace("${artifactId}", MODULE_PREFIX)
-        .replace("${version}", MODULE_VERSION);
-    log.info("Module .. {}", md);
+    // register mock auth
+    JsonObject authDescriptor = new JsonObject()
+        .put("id", "auth-1.0.0")
+        .put("name", "Mock Auth")
+        .put("provides", new JsonArray()
+                .add(new JsonObject()
+                    .put("id", "authtoken")
+                    .put("version", "2.1")))
+        .put("requires", new JsonArray());
 
-    // register module
+    final String mdAuth = authDescriptor.encodePrettily();
+    f = f.compose(t ->
+        webClient.postAbs(OKAPI_URL + "/_/proxy/modules")
+            .expect(ResponsePredicate.SC_CREATED)
+            .sendJsonObject(new JsonObject(mdAuth))
+            .mapEmpty());
+
+    // register module mod-settings
+    String mdTemplate = Files.readString(Path.of("descriptors/ModuleDescriptor-template.json"));
+    JsonObject moduleDescriptor = new JsonObject(mdTemplate);
+    moduleDescriptor.put("id", moduleDescriptor.getString("id")
+      .replace("${artifactId}", MODULE_PREFIX)
+      .replace("${version}", MODULE_VERSION));
+    final String md = moduleDescriptor.encodePrettily();
+
     f = f.compose(t ->
         webClient.postAbs(OKAPI_URL + "/_/proxy/modules")
             .expect(ResponsePredicate.SC_CREATED)
