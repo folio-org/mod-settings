@@ -113,7 +113,12 @@
       ]
     }
   ],
-  "requires": [],
+  "requires": [
+    {
+      "id": "authtoken",
+      "version": "2.1"
+    }
+  ],
   "permissionSets": [
     {
       "permissionName": "mod-settings.entries.item.post",
@@ -144,7 +149,9 @@
       "permissionName": "mod-settings.entries.put",
       "displayName": "settings - upload",
       "description": "Upload settings",
-      "replaces": [ "mod-settings.entries.upload" ]
+      "replaces": [
+        "mod-settings.entries.upload"
+      ]
     },
     {
       "permissionName": "mod-settings.entries.all",
