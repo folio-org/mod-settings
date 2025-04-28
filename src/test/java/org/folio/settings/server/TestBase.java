@@ -14,6 +14,7 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.okapi.common.ChattyHttpResponseExpectation;
 import org.folio.settings.server.main.MainVerticle;
 import org.folio.tlib.postgres.testing.TenantPgPoolContainer;
 import org.junit.AfterClass;
@@ -95,67 +96,66 @@ public class TestBase {
                     .put("version", "2.1")))
         .put("requires", new JsonArray());
 
-    final String mdAuth = authDescriptor.encodePrettily();
     f = f.compose(t ->
         webClient.postAbs(OKAPI_URL + "/_/proxy/modules")
-            .expect(ResponsePredicate.SC_CREATED)
-            .sendJsonObject(new JsonObject(mdAuth))
+            .sendJsonObject(authDescriptor)
+            .expecting(ChattyHttpResponseExpectation.SC_CREATED)
             .mapEmpty());
 
     // register module mod-settings
     String mdTemplate = Files.readString(Path.of("descriptors/ModuleDescriptor-template.json"));
     JsonObject moduleDescriptor = new JsonObject(mdTemplate);
-    moduleDescriptor.put("id", moduleDescriptor.getString("id")
+    moduleDescriptor.put("id",
+      moduleDescriptor.getString("id")
       .replace("${artifactId}", MODULE_PREFIX)
       .replace("${version}", MODULE_VERSION));
-    final String md = moduleDescriptor.encodePrettily();
 
     f = f.compose(t ->
         webClient.postAbs(OKAPI_URL + "/_/proxy/modules")
-            .expect(ResponsePredicate.SC_CREATED)
-            .sendJsonObject(new JsonObject(md))
+            .sendJsonObject(moduleDescriptor)
+            .expecting(ChattyHttpResponseExpectation.SC_CREATED)
             .mapEmpty());
 
     // tell okapi where our module is running
     f = f.compose(t ->
         webClient.postAbs(OKAPI_URL + "/_/discovery/modules")
-            .expect(ResponsePredicate.SC_CREATED)
             .sendJsonObject(new JsonObject()
                 .put("instId", MODULE_ID)
                 .put("srvcId", MODULE_ID)
                 .put("url", MODULE_URL))
+            .expecting(ChattyHttpResponseExpectation.SC_CREATED)
             .mapEmpty());
 
     // create tenant 1
     f = f.compose(t ->
         webClient.postAbs(OKAPI_URL + "/_/proxy/tenants")
-            .expect(ResponsePredicate.SC_CREATED)
             .sendJsonObject(new JsonObject().put("id", TENANT_1))
+            .expecting(ChattyHttpResponseExpectation.SC_CREATED)
             .mapEmpty());
 
     // enable module for tenant 1
     f = f.compose(e ->
         webClient.postAbs(OKAPI_URL + "/_/proxy/tenants/" + TENANT_1 + "/install")
-            .expect(ResponsePredicate.SC_OK)
             .sendJson(new JsonArray().add(new JsonObject()
                 .put("id", MODULE_PREFIX)
                 .put("action", "enable")))
+            .expecting(ChattyHttpResponseExpectation.SC_OK)
             .mapEmpty());
 
     // create tenant 2
     f = f.compose(t ->
         webClient.postAbs(OKAPI_URL + "/_/proxy/tenants")
-            .expect(ResponsePredicate.SC_CREATED)
             .sendJsonObject(new JsonObject().put("id", TENANT_2))
+            .expecting(ChattyHttpResponseExpectation.SC_CREATED)
             .mapEmpty());
 
     // enable module for tenant 2
     f = f.compose(e ->
         webClient.postAbs(OKAPI_URL + "/_/proxy/tenants/" + TENANT_2 + "/install")
-            .expect(ResponsePredicate.SC_OK)
             .sendJson(new JsonArray().add(new JsonObject()
                 .put("id", MODULE_PREFIX)
                 .put("action", "enable")))
+            .expecting(ChattyHttpResponseExpectation.SC_OK)
             .mapEmpty());
 
     f.onComplete(context.asyncAssertSuccess());
