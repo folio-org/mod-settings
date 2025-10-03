@@ -22,7 +22,7 @@ public class EntryTest {
     e.setScope("a");
     e.setKey("b");
     e.setValue("x", "y");
-    assertThrows(IllegalArgumentException.class, () -> e.validate()).getMessage().concat("id");
+    assertThrows(IllegalArgumentException.class, e::validate).getMessage().concat("id");
   }
 
   @Test
@@ -31,7 +31,7 @@ public class EntryTest {
     e.setId(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
     e.setKey("b");
     e.setValue("x", "y");
-    assertThrows(IllegalArgumentException.class, () -> e.validate()).getMessage().concat("scope");
+    assertThrows(IllegalArgumentException.class, e::validate).getMessage().concat("scope");
   }
 
   @Test
@@ -40,7 +40,7 @@ public class EntryTest {
     e.setScope("a");
     e.setId(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
     e.setValue("x", "y");
-    assertThrows(IllegalArgumentException.class, () -> e.validate()).getMessage().concat("key");
+    assertThrows(IllegalArgumentException.class, e::validate).getMessage().concat("key");
   }
 
 }
