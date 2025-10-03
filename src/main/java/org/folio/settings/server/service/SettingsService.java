@@ -66,7 +66,7 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
     } else if (cause instanceof UserException) {
       httpResponse(ctx, 400, cause.getMessage());
     } else if (cause instanceof IllegalArgumentException) {
-      httpResponse(ctx, 400, cause.getMessage());
+      httpResponse(ctx, 400, cause);
     } else {
       httpResponse(ctx, defaultCode, cause);
     }
