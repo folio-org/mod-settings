@@ -3,16 +3,14 @@ package org.folio.settings.server.service;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.openapi.RouterBuilder;
-import io.vertx.ext.web.validation.RequestParameter;
-import io.vertx.ext.web.validation.RequestParameters;
-import io.vertx.ext.web.validation.ValidationHandler;
+import io.vertx.ext.web.openapi.router.RouterBuilder;
+import io.vertx.openapi.contract.OpenAPIContract;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
@@ -26,6 +24,7 @@ import org.folio.settings.server.storage.SettingsStorage;
 import org.folio.settings.server.storage.UserException;
 import org.folio.tlib.RouterCreator;
 import org.folio.tlib.TenantInitHooks;
+import org.folio.tlib.util.TenantUtil;
 
 public class SettingsService implements RouterCreator, TenantInitHooks {
 
@@ -35,12 +34,12 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
 
   @Override
   public Future<Router> createRouter(Vertx vertx) {
-    return RouterBuilder.create(vertx, "openapi/settings.yaml")
-        .map(routerBuilder -> {
-          // https://vertx.io/docs/vertx-web/java/#_limiting_body_size
-          routerBuilder.rootHandler(BodyHandler.create().setBodyLimit(BODY_LIMIT));
+    return OpenAPIContract.from(vertx, "openapi/settings.yaml")
+        .map(contract -> {
+          RouterBuilder routerBuilder = RouterBuilder.create(vertx, contract);
           handlers(routerBuilder);
           Router router = Router.router(vertx);
+          router.route().failureHandler(this::failureHandler);
           router.put("/settings/upload")
               .handler(ctx -> UploadService.uploadEntries(ctx)
                   .onFailure(cause -> commonError(ctx, cause)));
@@ -65,6 +64,8 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
     } else if (cause instanceof NotFoundException) {
       httpResponse(ctx, 404, cause.getMessage());
     } else if (cause instanceof UserException) {
+      httpResponse(ctx, 400, cause.getMessage());
+    } else if (cause instanceof IllegalArgumentException) {
       httpResponse(ctx, 400, cause.getMessage());
     } else {
       httpResponse(ctx, defaultCode, cause);
@@ -93,59 +94,39 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
       String operationId, Function<RoutingContext, Future<Void>> function) {
 
     routerBuilder
-        .operation(operationId)
-        .handler(ctx -> function.apply(ctx)
-            .onFailure(cause -> commonError(ctx, cause))
-        )
-        .failureHandler(this::failureHandler);
-  }
-
-  static SettingsStorage createFromParams(Vertx vertx, RequestParameters params) {
-    // get tenant
-    RequestParameter tenantParameter = params.headerParameter(XOkapiHeaders.TENANT);
-    String tenant = tenantParameter.getString();
-
-    // get user Id
-    RequestParameter userIdParameter = params.headerParameter(XOkapiHeaders.USER_ID);
-    UUID currentUserId = null;
-    if (userIdParameter != null) {
-      currentUserId = UUID.fromString(userIdParameter.getString());
-    }
-
-    // get permissions which is required in OpenAPI spec
-    RequestParameter okapiPermissions = params.headerParameter(XOkapiHeaders.PERMISSIONS);
-    JsonArray permissions = new JsonArray(okapiPermissions.getString());
-    return new SettingsStorage(vertx, tenant, currentUserId, permissions);
+        .getRoute(operationId)
+        // disable automatic validation and body parsing and do it ourselves
+        .setDoValidation(false)
+        .addHandler(BodyHandler.create().setBodyLimit(BODY_LIMIT))
+        .addHandler(ctx -> function.apply(ctx)
+            .onFailure(cause -> commonError(ctx, cause)))
+        .addFailureHandler(this::failureHandler);
   }
 
   static SettingsStorage create(RoutingContext ctx) {
-    return createFromParams(ctx.vertx(), ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY));
-  }
-
-  static SettingsStorage create(Vertx vertx, HttpServerRequest params) {
     // get tenant
-    String tenant = params.getHeader(XOkapiHeaders.TENANT);
+    String tenant = TenantUtil.tenant(ctx);
 
     // get user Id
-    String userIdParameter = params.getHeader(XOkapiHeaders.USER_ID);
+    String userIdParameter = ctx.request().getHeader(XOkapiHeaders.USER_ID);
     UUID currentUserId = null;
     if (userIdParameter != null) {
       currentUserId = UUID.fromString(userIdParameter);
     }
-    // get permissions
-    String okapiPermissions = params.getHeader(XOkapiHeaders.PERMISSIONS);
+
+    // get permissions which is required in OpenAPI spec
+    String okapiPermissions = ctx.request().getHeader(XOkapiHeaders.PERMISSIONS);
     if (okapiPermissions == null) {
       throw new UserException("Missing header " + XOkapiHeaders.PERMISSIONS);
     }
     JsonArray permissions = new JsonArray(okapiPermissions);
-    return new SettingsStorage(vertx, tenant, currentUserId, permissions);
+    return new SettingsStorage(ctx.vertx(), tenant, currentUserId, permissions);
   }
 
   Future<Void> postSetting(RoutingContext ctx) {
     SettingsStorage storage = create(ctx);
-    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    RequestParameter body = params.body();
-    Entry entry = body.getJsonObject().mapTo(Entry.class);
+    Entry entry = ctx.body().asJsonObject().mapTo(Entry.class);
+    entry.validate();
     return storage.createEntry(entry)
         .map(entity -> {
           ctx.response().setStatusCode(204);
@@ -156,8 +137,7 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
 
   Future<Void> getSetting(RoutingContext ctx) {
     SettingsStorage storage = create(ctx);
-    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    String id  = params.pathParameter("id").getString();
+    String id = ctx.pathParam("id");
     return storage.getEntry(UUID.fromString(id))
         .map(entity -> {
           HttpResponse.responseJson(ctx, 200)
@@ -168,10 +148,9 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
 
   Future<Void> updateSetting(RoutingContext ctx) {
     SettingsStorage storage = create(ctx);
-    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    RequestParameter body = params.body();
-    Entry entry = body.getJsonObject().mapTo(Entry.class);
-    UUID id  = UUID.fromString(params.pathParameter("id").getString());
+    Entry entry = ctx.body().asJsonObject().mapTo(Entry.class);
+    entry.validate();
+    UUID id = UUID.fromString(ctx.pathParam("id"));
     if (!id.equals(entry.getId())) {
       return Future.failedFuture(new UserException("id mismatch"));
     }
@@ -185,8 +164,7 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
 
   Future<Void> deleteSetting(RoutingContext ctx) {
     SettingsStorage configStorage = create(ctx);
-    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    String id  = params.pathParameter("id").getString();
+    String id = ctx.pathParam("id");
     return configStorage.deleteEntry(UUID.fromString(id))
         .map(res -> {
           ctx.response().setStatusCode(204);
@@ -197,13 +175,12 @@ public class SettingsService implements RouterCreator, TenantInitHooks {
 
   Future<Void> getSettings(RoutingContext ctx) {
     SettingsStorage storage = create(ctx);
-    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    RequestParameter queryParameter = params.queryParameter("query");
-    String query = queryParameter != null ? queryParameter.getString() : null;
-    RequestParameter limitParameter = params.queryParameter("limit");
-    int limit = limitParameter != null ? limitParameter.getInteger() : 10;
-    RequestParameter offsetParameter = params.queryParameter("offset");
-    int offset = offsetParameter != null ? offsetParameter.getInteger() : 0;
+    List<String> tmp = ctx.queryParam("query");
+    String query = tmp.isEmpty() ? null : tmp.get(0);
+    tmp = ctx.queryParam("limit");
+    int limit = tmp.isEmpty() ? 10 : Integer.parseInt(tmp.get(0));
+    tmp = ctx.queryParam("offset");
+    int offset = tmp.isEmpty() ? 0 : Integer.parseInt(tmp.get(0));
     return storage.getEntries(ctx.response(), query, offset, limit);
   }
 

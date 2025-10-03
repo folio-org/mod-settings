@@ -70,4 +70,20 @@ public class Entry {
   public void setUserId(UUID userId) {
     this.userId = userId;
   }
+
+  /**
+   * Validate that required fields are present.
+   * @throws IllegalArgumentException if a required field is missing
+   */
+  public void validate() {
+    if (id == null) {
+      throw new IllegalArgumentException("Entry must have an id");
+    }
+    if (scope == null) {
+      throw new IllegalArgumentException("Entry must have a scope");
+    }
+    if (key == null) {
+      throw new IllegalArgumentException("Entry must have a key");
+    }
+  }
 }
