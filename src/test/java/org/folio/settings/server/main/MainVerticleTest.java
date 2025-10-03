@@ -25,7 +25,8 @@ public class MainVerticleTest extends TestBase {
         .get("/admin/health")
         .then()
         .statusCode(200)
-        .contentType(ContentType.TEXT);
+        .contentType(ContentType.TEXT)
+        .body(containsString("OK"));
   }
 
   @Test
