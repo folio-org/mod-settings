@@ -33,7 +33,7 @@
     <vertx.version>5.0.4</vertx.version>
     <okapi.version>7.0.0</okapi.version>
     <vertxlib.version>4.0.0</vertxlib.version>
-    <vertx.launcher>io.vertx.core.Launcher</vertx.launcher>
+    <vertx.launcher>io.vertx.launcher.application.VertxApplication</vertx.launcher>
     <vertx.verticle>org.folio.settings.server.main.MainVerticle</vertx.verticle>
     <java.version>21</java.version>
     <maven.compiler.source>21</maven.compiler.source>
@@ -75,6 +75,10 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-pg-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-launcher-application</artifactId>
     </dependency>
     <dependency>
       <groupId>org.folio</groupId>

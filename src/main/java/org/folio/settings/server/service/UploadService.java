@@ -24,7 +24,6 @@ public class UploadService {
       if (contentType == null || !contentType.startsWith("application/json")) {
         throw new UserException("Content-Type must be application/json");
       }
-      // SettingsStorage storage = SettingsService.create(ctx.vertx(), ctx.request());
       SettingsStorage storage = SettingsService.create(ctx);
       JsonParser jsonParser = JsonParser.newParser(ctx.request());
       JsonObject uploadResponse = new JsonObject()
