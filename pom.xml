@@ -328,6 +328,9 @@
         <version>3.14.1</version>
         <configuration>
           <encoding>UTF-8</encoding>
+            <compilerArgs>
+              <arg>-proc:none</arg>
+            </compilerArgs>
         </configuration>
       </plugin>
 
