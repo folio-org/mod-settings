@@ -1,46 +1,31 @@
 package org.folio.settings.server.data;
 
-import static org.junit.Assert.assertThrows;
-
 import java.util.UUID;
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.api.Assertions;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
-public class EntryTest {
-  @Test
-  public void testValidate() {
-    Entry e = new Entry();
-    e.setId(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
-    e.setScope("a");
-    e.setKey("b");
-    e.setValue("x", "y");
-    e.validate();
-  }
+class EntryTest {
 
-  @Test
-  public void testMissingId() {
-    Entry e = new Entry();
-    e.setScope("a");
-    e.setKey("b");
-    e.setValue("x", "y");
-    assertThrows(IllegalArgumentException.class, e::validate).getMessage().concat("id");
-  }
-
-  @Test
-  public void testMissingScope() {
-    Entry e = new Entry();
-    e.setId(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
-    e.setKey("b");
-    e.setValue("x", "y");
-    assertThrows(IllegalArgumentException.class, e::validate).getMessage().concat("scope");
-  }
-
-  @Test
-  public void testMissingKey() {
-    Entry e = new Entry();
-    e.setScope("a");
-    e.setId(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
-    e.setValue("x", "y");
-    assertThrows(IllegalArgumentException.class, e::validate).getMessage().concat("key");
-  }
-
+    @ParameterizedTest
+    @CsvSource({
+        "123e4567-e89b-12d3-a456-426614174000, s, k, ",
+        "                                    , s, k, 'Entry must have an id'",
+        "123e4567-e89b-12d3-a456-426614174000,  , k, 'Entry must have a scope'",
+        "123e4567-e89b-12d3-a456-426614174000, s,  , 'Entry must have a key'",
+    })
+    void testValidate(UUID id, String scope, String key, String expectedMessage) {
+        var entry = new Entry();
+        entry.setId(id);
+        entry.setScope(scope);
+        entry.setKey(key);
+        if (expectedMessage == null) {
+            Assertions.assertDoesNotThrow(entry::validate);
+        } else {
+            var thrown = Assertions.assertThrows(IllegalArgumentException.class, entry::validate);
+            assertThat(thrown.getMessage(), is(expectedMessage));
+        }
+    }
 }
