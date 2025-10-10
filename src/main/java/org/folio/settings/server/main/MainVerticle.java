@@ -34,7 +34,7 @@ public class MainVerticle extends AbstractVerticle {
         new HealthApi(),
     };
 
-    RouterCreator.mountAll(vertx, routerCreators)
+    RouterCreator.mountAll(vertx, routerCreators, "mod-settings")
         .compose(router -> {
           HttpServerOptions so = new HttpServerOptions()
               .setCompressionSupported(true)

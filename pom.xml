@@ -30,9 +30,10 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <okapi.version>6.2.1</okapi.version>
-    <vertxlib.version>3.4.0</vertxlib.version>
-    <vertx.launcher>io.vertx.core.Launcher</vertx.launcher>
+    <vertx.version>5.0.4</vertx.version>
+    <okapi.version>7.0.0</okapi.version>
+    <vertxlib.version>4.0.0</vertxlib.version>
+    <vertx.launcher>io.vertx.launcher.application.VertxApplication</vertx.launcher>
     <vertx.verticle>org.folio.settings.server.main.MainVerticle</vertx.verticle>
     <java.version>21</java.version>
     <maven.compiler.source>21</maven.compiler.source>
@@ -45,6 +46,12 @@
       <id>folio-nexus</id>
       <name>FOLIO Maven repository</name>
       <url>https://repository.folio.org/repository/maven-folio</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
     </pluginRepository>
   </pluginRepositories>
 
@@ -59,19 +66,19 @@
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-openapi</artifactId>
+      <artifactId>vertx-openapi</artifactId>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-rx-java2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-api-contract</artifactId>
+      <artifactId>vertx-web-openapi-router</artifactId>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-pg-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-launcher-application</artifactId>
     </dependency>
     <dependency>
       <groupId>org.folio</groupId>
@@ -89,10 +96,34 @@
       <groupId>org.folio.okapi</groupId>
       <artifactId>okapi-common</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
     <!-- Test dependencies -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.vintage</groupId>
+      <artifactId>junit-vintage-engine</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -150,7 +181,7 @@
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-stack-depchain</artifactId>
-        <version>4.5.13</version>
+        <version>${vertx.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -182,12 +213,12 @@
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>rest-assured</artifactId>
-        <version>5.5.0</version>
+        <version>5.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.testcontainers</groupId>
         <artifactId>testcontainers-bom</artifactId>
-        <version>1.20.6</version>
+        <version>1.21.3</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -195,6 +226,13 @@
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>4.13.2</version>
+      </dependency>
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>6.0.0</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>org.awaitility</groupId>
@@ -210,7 +248,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.6.0</version>
+        <version>3.6.1</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -287,16 +325,19 @@
 
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.14.0</version>
+        <version>3.14.1</version>
         <configuration>
           <encoding>UTF-8</encoding>
+            <compilerArgs>
+              <arg>-proc:none</arg>
+            </compilerArgs>
         </configuration>
       </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.5.2</version>
+        <version>3.5.4</version>
       </plugin>
 
       <plugin>
@@ -316,6 +357,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
+        <version>3.1.1</version>
         <configuration>
           <preparationGoals>clean verify</preparationGoals>
           <tagNameFormat>v@{project.version}</tagNameFormat>
@@ -337,7 +379,6 @@
         </dependencies>
         <configuration>
           <configLocation>checkstyle/folio_checks.xml</configLocation>
-          <encoding>UTF-8</encoding>
           <violationSeverity>warning</violationSeverity>
           <consoleOutput>false</consoleOutput>
           <failsOnError>true</failsOnError>
@@ -376,6 +417,20 @@
       </plugin>
       <plugin>
         <groupId>org.folio</groupId>
+        <artifactId>openapi-deref-plugin</artifactId>
+        <version>4.0.0</version>
+        <executions>
+          <execution>
+            <id>dereference-books</id>
+            <goals>
+              <goal>dereference</goal>
+            </goals>
+            <phase>generate-resources</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.folio</groupId>
         <artifactId>folio-module-descriptor-validator</artifactId>
         <version>${folio-module-descriptor-validator.version}</version>
         <executions>
@@ -394,13 +449,7 @@
       <name>FOLIO Maven repository</name>
       <url>https://repository.folio.org/repository/maven-folio</url>
     </repository>
-    <repository>
-      <id>indexdata</id>
-      <name>Index Data</name>
-      <url>https://maven.indexdata.com/</url>
-    </repository>
   </repositories>
-
   <distributionManagement>
     <repository>
       <id>folio-nexus</id>
