@@ -1,7 +1,7 @@
 package org.folio.settings.server.main;
 
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Promise;
+import io.vertx.core.Future;
+import io.vertx.core.VerticleBase;
 import io.vertx.core.http.HttpServerOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,11 +13,11 @@ import org.folio.tlib.api.HealthApi;
 import org.folio.tlib.api.Tenant2Api;
 import org.folio.tlib.postgres.TenantPgPool;
 
-public class MainVerticle extends AbstractVerticle {
-  final Logger log = LogManager.getLogger(MainVerticle.class);
+public class MainVerticle extends VerticleBase {
+  private static final Logger log = LogManager.getLogger(MainVerticle.class);
 
   @Override
-  public void start(Promise<Void> promise) {
+  public Future<?> start() {
     TenantPgPool.setModule("mod-settings");
     ModuleVersionReporter m = new ModuleVersionReporter("org.folio/mod-settings");
     log.info("Starting {} {} {}", m.getModule(), m.getVersion(), m.getCommitId());
@@ -34,22 +34,18 @@ public class MainVerticle extends AbstractVerticle {
         new HealthApi(),
     };
 
-    RouterCreator.mountAll(vertx, routerCreators, "mod-settings")
-        .compose(router -> {
-          HttpServerOptions so = new HttpServerOptions()
-              .setCompressionSupported(true)
-              .setDecompressionSupported(true)
-              .setHandle100ContinueAutomatically(true);
-          return vertx.createHttpServer(so)
-              .requestHandler(router)
-              .listen(port).mapEmpty();
-        })
-        .onComplete(x -> promise.handle(x.mapEmpty()));
+    var httpServerOptions = new HttpServerOptions()
+        .setCompressionSupported(true)
+        .setDecompressionSupported(true)
+        .setHandle100ContinueAutomatically(true);
+    return RouterCreator.mountAll(vertx, routerCreators, "mod-settings")
+        .compose(router -> vertx.createHttpServer(httpServerOptions)
+            .requestHandler(router)
+            .listen(port));
   }
 
   @Override
-  public void stop(Promise<Void> promise) {
-    TenantPgPool.closeAll()
-        .onComplete(promise);
+  public Future<?> stop() {
+    return TenantPgPool.closeAll();
   }
 }
