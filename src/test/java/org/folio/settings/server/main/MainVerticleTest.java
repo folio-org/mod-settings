@@ -1,5 +1,9 @@
 package org.folio.settings.server.main;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.vertx.core.json.JsonArray;
@@ -8,13 +12,8 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import java.util.UUID;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.settings.server.TestBase;
-import org.folio.settings.server.service.SettingsService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
 
 @RunWith(VertxUnitRunner.class)
 public class MainVerticleTest extends TestBase {
@@ -151,7 +150,7 @@ public class MainVerticleTest extends TestBase {
         .put("id", UUID.randomUUID().toString())
         .put("scope", UUID.randomUUID().toString())
         .put("key", "k1")
-        .put("value", new JsonObject().put("v", "x".repeat(SettingsService.BODY_LIMIT)));
+        .put("value", new JsonObject().put("v", "x".repeat(RouterImpl.BODY_LIMIT)));
     JsonArray permWrite = new JsonArray().add("mod-settings.global.write." + en.getString("scope"));
 
     RestAssured.given()

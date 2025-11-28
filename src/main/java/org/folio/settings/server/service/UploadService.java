@@ -14,11 +14,14 @@ import org.folio.settings.server.data.Entry;
 import org.folio.settings.server.storage.SettingsStorage;
 import org.folio.settings.server.storage.UserException;
 
-public class UploadService {
+public final class UploadService {
 
   private UploadService() { }
 
-  static Future<Void> uploadEntries(RoutingContext ctx) {
+  /**
+   * Upsert multiple settings.
+   */
+  public static Future<Void> uploadEntries(RoutingContext ctx) {
     try {
       String contentType = ctx.request().getHeader(HttpHeaders.CONTENT_TYPE);
       if (contentType == null || !contentType.startsWith("application/json")) {
