@@ -25,7 +25,8 @@ public class MainVerticleTest extends TestBase {
         .get("/admin/health")
         .then()
         .statusCode(200)
-        .contentType(ContentType.TEXT);
+        .contentType(ContentType.TEXT)
+        .body(containsString("OK"));
   }
 
   @Test
@@ -91,7 +92,7 @@ public class MainVerticleTest extends TestBase {
         .then()
         .statusCode(400)
         .contentType(ContentType.TEXT)
-        .body(containsString("Missing parameter X-Okapi-Tenant"));
+        .body(containsString("X-Okapi-Tenant header is missing"));
   }
 
   @Test
@@ -110,7 +111,7 @@ public class MainVerticleTest extends TestBase {
         .then()
         .statusCode(400)
         .contentType(ContentType.TEXT)
-        .body(containsString("Missing parameter X-Okapi-Permissions in HEADER"));
+        .body(containsString("Missing header X-Okapi-Permissions"));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -119,7 +120,7 @@ public class MainVerticleTest extends TestBase {
         .then()
         .statusCode(400)
         .contentType(ContentType.TEXT)
-        .body(containsString("Missing parameter X-Okapi-Permissions in HEADER"));
+        .body(containsString("Missing header X-Okapi-Permissions"));
   }
 
   @Test
@@ -141,7 +142,7 @@ public class MainVerticleTest extends TestBase {
         .then()
         .statusCode(400)
         .contentType(ContentType.TEXT)
-        .body(containsString("provided object should contain property id"));
+        .body(containsString("Entry must have an id"));
   }
 
   @Test
