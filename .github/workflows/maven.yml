@@ -10,4 +10,4 @@ jobs:
     uses: folio-org/.github/.github/workflows/maven.yml@FOLIO-4126-maven-workflows-1
     secrets: inherit
     with:
-      java-version: '21'
+      docker-label-documentation: 'https://github.com/folio-org/mod-settings/tree/master/doc'
