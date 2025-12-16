@@ -7,7 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.Config;
 import org.folio.okapi.common.ModuleVersionReporter;
-import org.folio.settings.server.service.SettingsService;
+import org.folio.settings.server.service.TenantService;
 import org.folio.tlib.RouterCreator;
 import org.folio.tlib.api.HealthApi;
 import org.folio.tlib.api.Tenant2Api;
@@ -26,11 +26,9 @@ public class MainVerticle extends VerticleBase {
         Config.getSysConf("http.port", "port", "8081", config()));
     log.info("Listening on port {}", port);
 
-    var settingsService = new SettingsService();
-
     RouterCreator[] routerCreators = {
-        settingsService,
-        new Tenant2Api(settingsService),
+        new RouterImpl(),
+        new Tenant2Api(new TenantService()),
         new HealthApi(),
     };
 
