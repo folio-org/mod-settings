@@ -34,7 +34,7 @@
           "methods": [
             "GET"
           ],
-          "path": "/locale",
+          "pathPattern": "/locale",
           "permissionsRequired": [
             "locale.item.get"
           ]
@@ -43,7 +43,7 @@
           "methods": [
             "PUT"
           ],
-          "path": "/locale",
+          "pathPattern": "/locale",
           "permissionsRequired": [
             "locale.item.put"
           ]
