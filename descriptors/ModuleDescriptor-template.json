@@ -210,16 +210,6 @@
       {
         "name": "DB_MAXPOOLSIZE",
         "value": "5"
-      },
-      {
-        "name": "DC_TEST_ENV_1",
-        "value": "5",
-        "description": "This is my beaut test description."
-      },
-      {
-        "name": "DC_TEST_ENV_2",
-        "value": "fred",
-        "description": "This is my beaut long test description, long test description, long test description."
       }
     ]
   }
