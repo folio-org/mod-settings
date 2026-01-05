@@ -15,13 +15,19 @@ jobs:
   delete-md:
     runs-on: ubuntu-latest
     steps:
-      - name: Show the latest ModuleDescriptor
+      - name: Get the latest ModuleDescriptor
+        id: show-latest
         uses: fjogeleit/http-request-action@v1
         with:
           url: "https://folio-registry.dev.folio.org/_/proxy/modules?filter=${{ env.name }}&latest=1"
           method: 'GET'
           contentType: 'application/json; charset=utf-8'
           customHeaders: '{ "Accept": "application/json; charset=utf-8" }'
+
+      - name: Show the latest ModuleDescriptor
+        run: |
+          echo "status=${{ steps.show-latest.outputs.status }}"
+          echo "response=${{ steps.show-latest.outputs.response }}"
 
 #      - name: Delete a test ModuleDescriptor
 #        uses: fjogeleit/http-request-action@v1
