@@ -1,0 +1,39 @@
+name: Delete a test ModuleDescriptor
+
+# NOTE: Only for use while testing FOLIO-4426 etc.
+
+env:
+  name: 'mod-settings'
+  identifier: '1.3.0-SNAPSHOT.2081'
+
+on:
+  workflow_dispatch:
+
+jobs:
+  delete-md:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the latest ModuleDescriptor
+        id: show-latest
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: "https://folio-registry.dev.folio.org/_/proxy/modules?filter=${{ env.name }}&latest=1"
+          method: 'GET'
+          contentType: 'application/json; charset=utf-8'
+          customHeaders: '{ "Accept": "application/json; charset=utf-8" }'
+
+      - name: Show the latest ModuleDescriptor
+        run: |
+          echo "status=${{ steps.show-latest.outputs.status }}"
+          echo "response=${{ steps.show-latest.outputs.response }}"
+
+#      - name: Delete a test ModuleDescriptor
+#        id: delete-specific
+#        uses: fjogeleit/http-request-action@v1
+#        with:
+#          url: https://folio-registry.dev.folio.org/_/proxy/modules/${{ env.name }}-${{ env.identifier }}
+#          method: 'DELETE'
+#          contentType: 'application/json; charset=utf-8'
+#          customHeaders: '{ "Accept": "application/json; charset=utf-8" }'
+#          username: ${{ secrets.FOLIO_REGISTRY_USERNAME }}
+#          password: ${{ secrets.FOLIO_REGISTRY_PASSWORD }}
