@@ -27,13 +27,18 @@ jobs:
           echo "status=${{ steps.show-latest.outputs.status }}"
           echo "response=${{ steps.show-latest.outputs.response }}"
 
-#      - name: Delete a test ModuleDescriptor
-#        id: delete-specific
-#        uses: fjogeleit/http-request-action@v1
-#        with:
-#          url: https://folio-registry.dev.folio.org/_/proxy/modules/${{ env.name }}-${{ env.identifier }}
-#          method: 'DELETE'
-#          contentType: 'application/json; charset=utf-8'
-#          customHeaders: '{ "Accept": "application/json; charset=utf-8" }'
-#          username: ${{ secrets.FOLIO_REGISTRY_USERNAME }}
-#          password: ${{ secrets.FOLIO_REGISTRY_PASSWORD }}
+      - name: Delete a test ModuleDescriptor
+        id: delete-specific
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: https://folio-registry.dev.folio.org/_/proxy/modules/${{ env.name }}-${{ env.identifier }}
+          method: 'DELETE'
+          contentType: 'application/json; charset=utf-8'
+          customHeaders: '{ "Accept": "application/json; charset=utf-8" }'
+          username: ${{ secrets.FOLIO_REGISTRY_USERNAME }}
+          password: ${{ secrets.FOLIO_REGISTRY_PASSWORD }}
+
+      - name: Show result for delete ModuleDescriptor
+        run: |
+          echo "status=${{ steps.delete-specific.outputs.status }}"
+          echo "response=${{ steps.delete-specific.outputs.response }}"
