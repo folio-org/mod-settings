@@ -11,7 +11,11 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/_/tenant"
+          "pathPattern": "/_/tenant",
+          "permissionsDesired": [
+            "configuration.entries.collection.get",
+            "configuration.entries.item.delete"
+          ]
         },
         {
           "methods": [
@@ -19,6 +23,30 @@
             "DELETE"
           ],
           "pathPattern": "/_/tenant/{id}"
+        }
+      ]
+    },
+    {
+      "id": "locale",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/locale",
+          "permissionsRequired": [
+            "locale.item.get"
+          ]
+        },
+        {
+          "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/locale",
+          "permissionsRequired": [
+            "locale.item.put"
+          ]
         }
       ]
     },
@@ -119,7 +147,32 @@
       "version": "2.1"
     }
   ],
+  "optional": [
+    {
+      "id": "configuration",
+      "version": "2.0"
+    }
+  ],
   "permissionSets": [
+    {
+      "permissionName": "locale.item.get",
+      "displayName": "locale - get setting",
+      "description": "Get locale setting"
+    },
+    {
+      "permissionName": "locale.item.put",
+      "displayName": "locale - update setting",
+      "description": "Update locale setting"
+    },
+    {
+      "permissionName": "locale.item.all",
+      "displayName": "locale - all permissions",
+      "description": "All locale permissions",
+      "subPermissions": [
+        "locale.item.get",
+        "locale.item.put"
+      ]
+    },
     {
       "permissionName": "mod-settings.entries.item.post",
       "displayName": "settings - create setting",

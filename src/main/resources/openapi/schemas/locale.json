@@ -1,0 +1,29 @@
+{
+  "description": "List of key/value parameters of an error",
+  "type": "object",
+  "properties": {
+    "locale": {
+      "description": "The locale for language display, date format, etc., for example 'en-US' or 'sv' or 'es-419'",
+      "type": "string"
+    },
+    "currency": {
+      "description": "Primary currency, for example USD, EUR, INR",
+      "type": "string"
+    },
+    "timezone": {
+      "description": "The time zone when showing date time information, for example 'UTC', 'America/New_York'",
+      "type": "string"
+    },
+    "numberingSystem": {
+      "description": "The system used for numeral display, either latn or arab",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "locale",
+    "currency",
+    "timezone",
+    "numberingSystem"
+  ]
+}

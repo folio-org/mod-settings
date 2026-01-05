@@ -3,6 +3,31 @@ info:
   title: Settings
   version: v1
 paths:
+  /locale:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+    get:
+      description: Get the locale settings for the tenant.
+      operationId: getLocale
+      responses:
+        "200":
+          description: The locale settings
+          content:
+            application/json:
+              schema:
+                $ref: schemas/locale.json
+        "500":
+          $ref: "#/components/responses/trait_500"
+    put:
+      description: Set the locale settings for the tenant.
+      operationId: setLocale
+      responses:
+        "204":
+          description: Locale settings updated
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "500":
+          $ref: "#/components/responses/trait_500"
   /settings/entries:
     parameters:
       - $ref: headers/okapi-permissions.yaml
