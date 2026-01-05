@@ -7,8 +7,6 @@ env:
   identifier: '1.3.0-SNAPSHOT.2081'
 
 on:
-  push:
-    branches: ['FOLIO-4126-maven-workflows-1']
   workflow_dispatch:
 
 jobs:
@@ -30,6 +28,7 @@ jobs:
           echo "response=${{ steps.show-latest.outputs.response }}"
 
 #      - name: Delete a test ModuleDescriptor
+#        id: delete-specific
 #        uses: fjogeleit/http-request-action@v1
 #        with:
 #          url: https://folio-registry.dev.folio.org/_/proxy/modules/${{ env.name }}-${{ env.identifier }}
