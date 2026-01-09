@@ -16,3 +16,5 @@ jobs:
       docker-label-documentation: 'https://github.com/folio-org/mod-settings/tree/master/doc'
       do-docker: false
       publish-module-descriptor: false
+      do-sonar-scan: false
+      do-maven-deploy: true
