@@ -5,13 +5,10 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 import io.restassured.RestAssured;
-import io.restassured.response.ValidatableResponse;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpServer;
-import io.vertx.core.json.JsonArray;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.sqlclient.Tuple;
@@ -41,31 +38,52 @@ class LocaleServiceTest {
   static void beforeAll(Vertx vertx, VertxTestContext vtc) {
     RestAssured.baseURI = "http://localhost:8081";
     vertx.deployVerticle(new MainVerticle())
+    .compose(x -> deployModConfigurationMock(vertx))
     .compose(x -> postTenant(vertx, "http://localhost:8081", "diku", "1.3.0"))
     .onComplete(vtc.succeedingThenComplete());
   }
 
-  static Future<Void> postTenant(Vertx vertx, String okapiUrl, String tenant, String moduleTo) {
-    var webClient = WebClient.create(vertx);
-    var body = JsonObject.of("module_to", moduleTo);
-    return webClient
-        .postAbs("http://localhost:8081/_/tenant")
-        .putHeader("X-Okapi-Url", okapiUrl)
-        .putHeader("X-Okapi-Tenant", tenant)
-        .putHeader("Content-Type", "application/json")
-        .sendJsonObject(body)
-        .compose(response -> {
-          assertThat(response.statusCode(), is(201));
-          var id = response.bodyAsJsonObject().getString("id");
-          return webClient.getAbs("http://localhost:8081/_/tenant/" + id + "?wait=30000")
-              .putHeader("X-Okapi-Tenant", tenant)
-              .send();
-        })
-        .map(response -> {
-          assertThat(response.statusCode(), is(200));
-          assertThat(response.bodyAsJsonObject().getBoolean("complete"), is(true));
-          return null;
-        });
+  private static Future<Void> deployModConfigurationMock(Vertx vertx) {
+    var configs = """
+                  {
+                    "configs": [
+                      {
+                        "locale": "es-ES"
+                      }
+                    ]
+                  }
+                  """;
+    return vertx.createHttpServer(new HttpServerOptions().setPort(8082))
+        .requestHandler(req -> req.response().setStatusCode(200).send(configs))
+        .listen()
+        .mapEmpty();
+  }
+
+  private static Future<Void> postTenant(Vertx vertx, String okapiUrl, String tenant, String moduleTo) {
+    return vertx.executeBlocking(() -> {
+      postTenant(okapiUrl, tenant, moduleTo);
+      return null;
+    });
+  }
+
+  private static void postTenant(String okapiUrl, String tenant, String moduleTo) {
+    var body = JsonObject.of("module_to", moduleTo).encodePrettily();
+    var id = RestAssured.given()
+        .header("X-Okapi-Url", okapiUrl)
+        .header("X-Okapi-Tenant", tenant)
+        .contentType("application/json")
+        .body(body)
+        .post("/_/tenant")
+        .then()
+        .statusCode(201)
+        .extract().path("id");
+
+    RestAssured.given()
+    .header("X-Okapi-Tenant", tenant)
+    .get("/_/tenant/" + id + "?wait=30000")
+    .then()
+    .statusCode(200)
+    .body("complete", is(true));
   }
 
   @Test
@@ -179,25 +197,6 @@ class LocaleServiceTest {
         "numberingSystem", "arab");
   }
 
-  Future<ValidatableResponse> postTenant(
-      String tenant, String moduleTo, Vertx vertx, JsonObject config) {
-
-    var configs = JsonObject.of("configs", JsonArray.of(config)).encodePrettily();
-    return vertx.createHttpServer()
-        .requestHandler(req -> req.response().setStatusCode(200).send(configs))
-        .listen(0)
-        .compose(srv -> postTenant(vertx, uri(srv), tenant, moduleTo))
-        .map(x -> RestAssured.given()
-            .header(XOkapiHeaders.TENANT, tenant)
-            .get("/locale")
-            .then()
-            .statusCode(200));
-  }
-
-  String uri(HttpServer httpServer) {
-    return "http://localhost:" + httpServer.actualPort();
-  }
-
   @ParameterizedTest
   @CsvSource({
     // do 2nd migration
@@ -206,26 +205,28 @@ class LocaleServiceTest {
     "migration2, 1.3.0,  ja",
     "migration3, 1.11.4, ja",
   })
-  void migration(String tenant, String version, String expectedLocale,
-      Vertx vertx, VertxTestContext vtc) {
+  void migration(String tenant, String version, String expectedLocale) {
+    postTenant("http://localhost:8082", tenant, version);
+    assertThat(getLocale(tenant), is("es-ES"));
 
-    var config = JsonObject.of("locale", "es-ES");
-    postTenant(tenant, version, vertx, config)
-    .onSuccess(res -> {
-      res.body("locale", is("es-ES"));
+    RestAssured.given()
+    .header(XOkapiHeaders.TENANT, tenant)
+    .contentType("application/json")
+    .body(getDe().put("locale", "ja").encode())
+    .put("/locale")
+    .then()
+    .statusCode(201);
 
-      RestAssured.given()
-      .header(XOkapiHeaders.TENANT, tenant)
-      .header("Content-Type", "application/json")
-      .body(getDe().put("locale", "ja").encode())
-      .put("/locale")
-      .then()
-      .statusCode(201);
-    })
-    .compose(x -> postTenant(tenant, version, vertx, config))
-    .onComplete(vtc.succeeding(res -> {
-      res.body("locale", is(expectedLocale));
-      vtc.completeNow();
-    }));
+    postTenant("http://localhost:8082", tenant, version);
+    assertThat(getLocale(tenant), is(expectedLocale));
+  }
+
+  private String getLocale(String tenant) {
+    return RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant)
+        .get("/locale")
+        .then()
+        .statusCode(200)
+        .extract().path("locale");
   }
 }
