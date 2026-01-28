@@ -20,8 +20,10 @@ public class TenantService implements TenantInitHooks {
     var versionStorage = new VersionStorage(vertx, tenant);
     return versionStorage.init()
         .compose(x -> versionStorage.getVersion())
-        .compose(version -> new LocaleStorage(vertx, tenant).init(tenantInitConf, version).map(version))
-        .compose(version -> new TenantAddressesStorage(vertx, tenant).init(tenantInitConf, version).map(version))
+        .compose(version -> new LocaleStorage(vertx, tenant)
+            .init(tenantInitConf, version).map(version))
+        .compose(version -> new TenantAddressesStorage(vertx, tenant)
+            .init(tenantInitConf, version).map(version))
         .compose(x -> new SettingsStorage(vertx, tenant, null, null).init())
         .compose(x -> versionStorage.setVersion(tenantInitConf.moduleTo().toString()));
   }

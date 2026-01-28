@@ -3,18 +3,6 @@ package org.folio.settings.server.storage;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.folio.settings.server.util.StringUtil.isBlank;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
-import org.folio.okapi.common.SemVer;
-import org.folio.okapi.common.XOkapiHeaders;
-import org.folio.settings.server.data.TenantAddress;
-import org.folio.settings.server.data.TenantAddresses;
-import org.folio.tlib.TenantInitConf;
-import org.folio.tlib.postgres.TenantPgPool;
-import org.folio.util.PercentCodec;
-
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -22,6 +10,16 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import org.folio.okapi.common.SemVer;
+import org.folio.okapi.common.XOkapiHeaders;
+import org.folio.settings.server.data.TenantAddress;
+import org.folio.settings.server.data.TenantAddresses;
+import org.folio.tlib.TenantInitConf;
+import org.folio.tlib.postgres.TenantPgPool;
+import org.folio.util.PercentCodec;
 
 public class TenantAddressesStorage {
 
@@ -65,13 +63,11 @@ public class TenantAddressesStorage {
   }
 
   private Future<Void> migrateData(TenantInitConf tenantInitConf, String oldVersion) {
-    System.out.println("Old version: " + oldVersion);
     var oldSemVersion = new SemVer(oldVersion);
     if (SEM_VER_1_3_0.compareTo(oldSemVersion) <= 0) {
       return Future.succeededFuture();
     }
 
-    System.out.println("Migrating tenant addresses for tenant " + tenantInitConf.tenant());
     var webClient = WebClient.create(tenantInitConf.vertx());
     return getFromModConfiguration(tenantInitConf, webClient)
         .compose(this::insertMigratedAddresses)
@@ -141,16 +137,15 @@ public class TenantAddressesStorage {
   }
 
   private Future<Void> insertMigratedAddresses(List<TenantAddress> addresses) {
-    System.out.println(" Migrating " + (addresses == null ? 0 : addresses.size()) + " addresses");
     return addresses == null || addresses.isEmpty()
         ? Future.succeededFuture()
         : Future.all(addresses.stream().map(this::insertMigratedAddress).toList()).mapEmpty();
   }
 
-  private Future<Void> insertMigratedAddress(TenantAddress tenantAddress) {
-    return pool.preparedQuery(("INSERT INTO %s (id, name, address) VALUES ($1, $2, $3) " +
-            "ON CONFLICT (name) DO NOTHING").formatted(addressesTable))
-        .execute(Tuple.of(tenantAddress.getId(), tenantAddress.getName(), tenantAddress.getAddress()))
+  private Future<Void> insertMigratedAddress(TenantAddress address) {
+    return pool.preparedQuery(("INSERT INTO %s (id, name, address) VALUES ($1, $2, $3) "
+            + "ON CONFLICT (name) DO NOTHING").formatted(addressesTable))
+        .execute(Tuple.of(address.getId(), address.getName(), address.getAddress()))
         .mapEmpty();
   }
 
@@ -158,9 +153,8 @@ public class TenantAddressesStorage {
    * Get tenant addresses.
    */
   public Future<TenantAddresses> getTenantAddresses(int offset, int limit) {
-    System.out.println(addressesTable);
-    return pool.preparedQuery(("SELECT id, name, address FROM %s " +
-            "ORDER BY name LIMIT $1 OFFSET $2").formatted(addressesTable))
+    return pool.preparedQuery(("SELECT id, name, address FROM %s "
+            + "ORDER BY name LIMIT $1 OFFSET $2").formatted(addressesTable))
         .execute(Tuple.of(limit, offset))
         .map(this::mapToTenantAddresses)
         .map(TenantAddresses::new);
@@ -170,7 +164,8 @@ public class TenantAddressesStorage {
    * Get tenant address by id.
    */
   public Future<TenantAddress> getTenantAddress(String id) {
-    return pool.preparedQuery("SELECT id, name, address FROM %s WHERE id = $1".formatted(addressesTable))
+    return pool.preparedQuery("SELECT id, name, address FROM %s WHERE id = $1"
+            .formatted(addressesTable))
         .execute(Tuple.of(UUID.fromString(id)))
         .compose(this::mapToTenantAddress);
   }
@@ -178,19 +173,21 @@ public class TenantAddressesStorage {
   /**
    * Create tenant address.
    */
-  public Future<TenantAddress> createTenantAddress(TenantAddress tenantAddress) {
-    updateTenantAddressIdIfNeeded(tenantAddress, tenantAddress.getId());
-    return pool.preparedQuery("INSERT INTO %s (id, name, address) VALUES ($1, $2, $3)".formatted(addressesTable))
-        .execute(Tuple.of(tenantAddress.getId(), tenantAddress.getName(), tenantAddress.getAddress()))
-        .map(tenantAddress);
+  public Future<TenantAddress> createTenantAddress(TenantAddress address) {
+    updateTenantAddressIdIfNeeded(address, address.getId());
+    return pool.preparedQuery("INSERT INTO %s (id, name, address) VALUES ($1, $2, $3)"
+            .formatted(addressesTable))
+        .execute(Tuple.of(address.getId(), address.getName(), address.getAddress()))
+        .map(address);
   }
 
   /**
    * Update tenant address.
    */
-  public Future<Void> updateTenantAddress(String id, TenantAddress tenantAddress) {
-    return pool.preparedQuery("UPDATE %s SET name = $1, address = $2 WHERE id = $3".formatted(addressesTable))
-        .execute(Tuple.of(tenantAddress.getName(), tenantAddress.getAddress(), UUID.fromString(id)))
+  public Future<Void> updateTenantAddress(String id, TenantAddress address) {
+    return pool.preparedQuery("UPDATE %s SET name = $1, address = $2 WHERE id = $3"
+            .formatted(addressesTable))
+        .execute(Tuple.of(address.getName(), address.getAddress(), UUID.fromString(id)))
         .compose(this::validateRowCount);
   }
 
@@ -222,14 +219,13 @@ public class TenantAddressesStorage {
         : Future.succeededFuture();
   }
 
-  private static TenantAddress updateTenantAddressIdIfNeeded(TenantAddress tenantAddress, String id) {
+  private static TenantAddress updateTenantAddressIdIfNeeded(TenantAddress address, String id) {
     try {
-      tenantAddress.setId(UUID.fromString(id).toString());
+      address.setId(UUID.fromString(id).toString());
     } catch (Exception e) {
-      tenantAddress.setId(UUID.randomUUID().toString());
+      address.setId(UUID.randomUUID().toString());
     }
-    return tenantAddress;
+    return address;
   }
 
 }
-

@@ -7,15 +7,14 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.folio.settings.server.util.StringUtil.isBlank;
 
-import org.folio.okapi.common.HttpResponse;
-import org.folio.settings.server.data.TenantAddress;
-import org.folio.settings.server.storage.TenantAddressesStorage;
-import org.folio.tlib.util.TenantUtil;
-
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.pgclient.PgException;
+import org.folio.okapi.common.HttpResponse;
+import org.folio.settings.server.data.TenantAddress;
+import org.folio.settings.server.storage.TenantAddressesStorage;
+import org.folio.tlib.util.TenantUtil;
 
 public final class TenantAddressesService {
 

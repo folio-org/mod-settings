@@ -12,6 +12,13 @@ public class TenantAddress {
   public TenantAddress() {
   }
 
+  /**
+   * Create a tenant address.
+   *
+   * @param id address id
+   * @param name address name
+   * @param address address value
+   */
   public TenantAddress(String id, String name, String address) {
     this.id = id;
     this.name = name;

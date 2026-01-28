@@ -17,7 +17,6 @@ public class TestUtils {
   }
 
   public static void postTenant(String okapiUrl, String tenant, String moduleTo) {
-    System.out.println(RestAssured.baseURI);
     var body = JsonObject.of("module_to", moduleTo).encodePrettily();
     var id = RestAssured.given()
         .header("X-Okapi-Url", okapiUrl)
