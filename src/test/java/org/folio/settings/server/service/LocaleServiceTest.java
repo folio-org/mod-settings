@@ -1,5 +1,6 @@
 package org.folio.settings.server.service;
 
+import static org.folio.settings.server.TestUtils.postTenant;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -9,30 +10,30 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
-import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.sqlclient.Tuple;
 
 import org.folio.okapi.common.XOkapiHeaders;
+import org.folio.settings.server.TestContainersSupport;
 import org.folio.settings.server.main.MainVerticle;
 import org.folio.tlib.postgres.TenantPgPool;
-import org.folio.tlib.postgres.testing.TenantPgPoolContainer;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-@ExtendWith(VertxExtension.class)
-@Testcontainers
-class LocaleServiceTest {
+class LocaleServiceTest implements TestContainersSupport {
 
-  @Container
-  public static PostgreSQLContainer<?> postgresContainer = TenantPgPoolContainer.create();
+  private static final String LOCALE_CONFIGS = """
+      {
+        "configs": [
+          {
+            "locale": "es-ES"
+          }
+        ]
+      }
+      """;
 
   @BeforeAll
   static void beforeAll(Vertx vertx, VertxTestContext vtc) {
@@ -44,46 +45,10 @@ class LocaleServiceTest {
   }
 
   private static Future<Void> deployModConfigurationMock(Vertx vertx) {
-    var configs = """
-                  {
-                    "configs": [
-                      {
-                        "locale": "es-ES"
-                      }
-                    ]
-                  }
-                  """;
     return vertx.createHttpServer(new HttpServerOptions().setPort(8082))
-        .requestHandler(req -> req.response().setStatusCode(200).send(configs))
+        .requestHandler(req -> req.response().setStatusCode(200).send(LOCALE_CONFIGS))
         .listen()
         .mapEmpty();
-  }
-
-  private static Future<Void> postTenant(Vertx vertx, String okapiUrl, String tenant, String moduleTo) {
-    return vertx.executeBlocking(() -> {
-      postTenant(okapiUrl, tenant, moduleTo);
-      return null;
-    });
-  }
-
-  private static void postTenant(String okapiUrl, String tenant, String moduleTo) {
-    var body = JsonObject.of("module_to", moduleTo).encodePrettily();
-    var id = RestAssured.given()
-        .header("X-Okapi-Url", okapiUrl)
-        .header("X-Okapi-Tenant", tenant)
-        .contentType("application/json")
-        .body(body)
-        .post("/_/tenant")
-        .then()
-        .statusCode(201)
-        .extract().path("id");
-
-    RestAssured.given()
-    .header("X-Okapi-Tenant", tenant)
-    .get("/_/tenant/" + id + "?wait=30000")
-    .then()
-    .statusCode(200)
-    .body("complete", is(true));
   }
 
   @Test

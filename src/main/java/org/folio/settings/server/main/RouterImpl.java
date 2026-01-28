@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.settings.server.service.LocaleService;
 import org.folio.settings.server.service.SettingsService;
+import org.folio.settings.server.service.TenantAddressesService;
 import org.folio.settings.server.service.UploadService;
 import org.folio.settings.server.storage.ForbiddenException;
 import org.folio.settings.server.storage.NotFoundException;
@@ -89,6 +90,11 @@ public class RouterImpl implements RouterCreator {
   private void handlers(RouterBuilder routerBuilder) {
     route(routerBuilder, "getLocale", LocaleService::getLocale);
     route(routerBuilder, "setLocale", LocaleService::setLocale);
+    route(routerBuilder, "getTenantAddresses", TenantAddressesService::getTenantAddresses);
+    route(routerBuilder, "createTenantAddress", TenantAddressesService::createTenantAddress);
+    route(routerBuilder, "getTenantAddress", TenantAddressesService::getTenantAddress);
+    route(routerBuilder, "updateTenantAddress", TenantAddressesService::updateTenantAddress);
+    route(routerBuilder, "deleteTenantAddress", TenantAddressesService::deleteTenantAddress);
     route(routerBuilder, "getSettings", SettingsService::getSettings);
     route(routerBuilder, "postSetting", SettingsService::postSetting);
     route(routerBuilder, "getSetting", SettingsService::getSetting);

@@ -1,0 +1,17 @@
+{
+  "description": "Tenant addresses",
+  "type": "object",
+  "properties": {
+    "addresses": {
+      "type": "array",
+      "description": "List of tenant addresses",
+      "items": {
+        "$ref": "tenantAddress.json"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "addresses"
+  ]
+}
