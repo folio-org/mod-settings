@@ -10,7 +10,6 @@ import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.pgclient.PgException;
-
 import org.folio.HttpStatus;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.settings.server.data.TenantAddress;
@@ -34,7 +33,8 @@ public final class TenantAddressesService {
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .getTenantAddresses(offset, limit)
         .map(tenantAddresses -> {
-          HttpResponse.responseJson(ctx, HTTP_OK.toInt()).end(JsonObject.mapFrom(tenantAddresses).encode());
+          HttpResponse.responseJson(ctx, HTTP_OK.toInt())
+              .end(JsonObject.mapFrom(tenantAddresses).encode());
           return null;
         });
   }
@@ -47,7 +47,8 @@ public final class TenantAddressesService {
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .getTenantAddress(id)
         .map(address -> {
-          HttpResponse.responseJson(ctx, HTTP_OK.toInt()).end(JsonObject.mapFrom(address).encode());
+          HttpResponse.responseJson(ctx, HTTP_OK.toInt())
+              .end(JsonObject.mapFrom(address).encode());
           return null;
         });
   }
@@ -65,7 +66,8 @@ public final class TenantAddressesService {
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .createTenantAddress(tenantAddress)
         .map(created -> {
-          HttpResponse.responseJson(ctx, HTTP_CREATED.toInt()).end(JsonObject.mapFrom(created).encode());
+          HttpResponse.responseJson(ctx, HTTP_CREATED.toInt())
+              .end(JsonObject.mapFrom(created).encode());
           return (Void) null;
         }).recover(cause -> handleException(ctx, cause));
   }
@@ -114,7 +116,8 @@ public final class TenantAddressesService {
 
   private static Future<Void> handleException(RoutingContext ctx, Throwable cause) {
     if (cause instanceof PgException pgException && "23505".equals(pgException.getSqlState())) {
-      HttpResponse.responseText(ctx, HttpStatus.HTTP_UNPROCESSABLE_ENTITY.toInt()).end("name already exists");
+      HttpResponse.responseText(ctx, HttpStatus.HTTP_UNPROCESSABLE_ENTITY.toInt())
+          .end("name already exists");
       return Future.succeededFuture();
     }
     return Future.failedFuture(cause);
