@@ -13,6 +13,6 @@ import io.vertx.junit5.VertxExtension;
 public interface TestContainersSupport {
 
   @Container
-  PostgreSQLContainer<?> postgresContainer = TenantPgPoolContainer.create();
+  PostgreSQLContainer<?> postgresContainer = TenantPgPoolContainer.create().withReuse(true);
 
 }

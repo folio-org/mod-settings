@@ -16,6 +16,7 @@ import io.vertx.junit5.VertxTestContext;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.settings.server.TestContainersSupport;
 import org.folio.settings.server.main.MainVerticle;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -45,6 +46,12 @@ class TenantAddressesServiceTest implements TestContainersSupport {
     vertx.deployVerticle(new MainVerticle())
         .compose(x -> deployModConfigurationMock(vertx))
         .compose(x -> postTenant(vertx, "http://localhost:8081", "diku", "1.3.0"))
+        .onComplete(vtc.succeedingThenComplete());
+  }
+
+  @AfterAll
+  static void afterAll(Vertx vertx, VertxTestContext vtc) {
+    vertx.close()
         .onComplete(vtc.succeedingThenComplete());
   }
 

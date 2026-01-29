@@ -48,17 +48,11 @@ public class TenantAddressesStorage {
   private Future<Void> initTable() {
     return pool.execute(List.of(
         """
-            CREATE TABLE IF NOT EXISTS %s
-              (id uuid PRIMARY KEY,
-               name text NOT NULL,
-               address text NOT NULL,
-               CONSTRAINT tenant_addresses_name_unique UNIQUE (name))
-            """.formatted(addressesTable),
-
-        """
-            CREATE UNIQUE INDEX IF NOT EXISTS tenant_addresses_name_unique
-              ON %s (name)
-            """.formatted(addressesTable)
+        CREATE TABLE IF NOT EXISTS %s
+          (id uuid PRIMARY KEY,
+           name text UNIQUE NOT NULL,
+           address text NOT NULL)
+        """.formatted(addressesTable)
     ));
   }
 
@@ -69,13 +63,13 @@ public class TenantAddressesStorage {
     }
 
     var webClient = WebClient.create(tenantInitConf.vertx());
-    return getFromModConfiguration(tenantInitConf, webClient)
+    return getAndDeleteFromModConfiguration(tenantInitConf, webClient)
         .compose(this::insertMigratedAddresses)
         .onComplete(x -> webClient.close())
         .mapEmpty();
   }
 
-  private static Future<List<TenantAddress>> getFromModConfiguration(
+  private static Future<List<TenantAddress>> getAndDeleteFromModConfiguration(
       TenantInitConf tenantInitConf, WebClient webClient) {
 
     var cql = "module==TENANT AND configName==tenant.addresses";
@@ -115,8 +109,8 @@ public class TenantAddressesStorage {
           }
 
           return Future.all(deletions)
-              .recover(x -> Future.succeededFuture())
-              .map(x -> addresses.isEmpty() ? null : addresses);
+              .otherwiseEmpty()
+              .map(addresses);
         })
         .otherwiseEmpty();
   }
