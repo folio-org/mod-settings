@@ -112,7 +112,7 @@ class TenantAddressesServiceTest implements TestContainersSupport {
         .body(JsonObject.of("name", name, "address", "address-unique-full2").encode())
         .post("/tenant-addresses")
         .then()
-        .statusCode(409)
+        .statusCode(422)
         .body(containsString("name already exists"));
   }
 
@@ -164,30 +164,24 @@ class TenantAddressesServiceTest implements TestContainersSupport {
   @Test
   void updateTenantAddressById() {
     var createdId = createAddress("diku", uniqueName("address"), "address1-full");
+    var newName = uniqueName("address");
+    var newAddress = "address1-full-updated";
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, "diku")
         .header("Content-Type", "application/json")
-        .body(JsonObject.of("name", uniqueName("address"), "address", "address1-full-updated").encode())
+        .body(JsonObject.of("name", newName, "address", newAddress).encode())
         .put("/tenant-addresses/" + createdId)
         .then()
         .statusCode(204);
-
-    var updated = RestAssured.given()
-        .header(XOkapiHeaders.TENANT, "diku")
-        .get("/tenant-addresses/" + createdId)
-        .then()
-        .statusCode(200)
-        .extract();
-    var updatedName = updated.path("name");
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, "diku")
         .get("/tenant-addresses/" + createdId)
         .then()
         .statusCode(200)
-        .body("name", is(updatedName))
-        .body("address", is("address1-full-updated"));
+        .body("name", is(newName))
+        .body("address", is(newAddress));
   }
 
   @Test
@@ -199,6 +193,12 @@ class TenantAddressesServiceTest implements TestContainersSupport {
         .delete("/tenant-addresses/" + createdId)
         .then()
         .statusCode(204);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, "diku")
+        .get("/tenant-addresses/" + createdId)
+        .then()
+        .statusCode(404);
   }
 
   private String createAddress(String tenant, String name, String address) {

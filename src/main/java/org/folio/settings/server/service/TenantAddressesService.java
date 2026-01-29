@@ -1,16 +1,17 @@
 package org.folio.settings.server.service;
 
-import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
-import static java.net.HttpURLConnection.HTTP_CONFLICT;
-import static java.net.HttpURLConnection.HTTP_CREATED;
-import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static java.net.HttpURLConnection.HTTP_OK;
+import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
+import static org.folio.HttpStatus.HTTP_CREATED;
+import static org.folio.HttpStatus.HTTP_NO_CONTENT;
+import static org.folio.HttpStatus.HTTP_OK;
 import static org.folio.settings.server.util.StringUtil.isBlank;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.pgclient.PgException;
+
+import org.folio.HttpStatus;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.settings.server.data.TenantAddress;
 import org.folio.settings.server.storage.TenantAddressesStorage;
@@ -33,7 +34,7 @@ public final class TenantAddressesService {
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .getTenantAddresses(offset, limit)
         .map(tenantAddresses -> {
-          HttpResponse.responseJson(ctx, HTTP_OK).end(JsonObject.mapFrom(tenantAddresses).encode());
+          HttpResponse.responseJson(ctx, HTTP_OK.toInt()).end(JsonObject.mapFrom(tenantAddresses).encode());
           return null;
         });
   }
@@ -46,7 +47,7 @@ public final class TenantAddressesService {
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .getTenantAddress(id)
         .map(address -> {
-          HttpResponse.responseJson(ctx, HTTP_OK).end(JsonObject.mapFrom(address).encode());
+          HttpResponse.responseJson(ctx, HTTP_OK.toInt()).end(JsonObject.mapFrom(address).encode());
           return null;
         });
   }
@@ -64,7 +65,7 @@ public final class TenantAddressesService {
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .createTenantAddress(tenantAddress)
         .map(created -> {
-          HttpResponse.responseJson(ctx, HTTP_CREATED).end(JsonObject.mapFrom(created).encode());
+          HttpResponse.responseJson(ctx, HTTP_CREATED.toInt()).end(JsonObject.mapFrom(created).encode());
           return (Void) null;
         }).recover(cause -> handleException(ctx, cause));
   }
@@ -82,7 +83,7 @@ public final class TenantAddressesService {
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .updateTenantAddress(id, tenantAddress)
         .map(x -> {
-          HttpResponse.responseText(ctx, HTTP_NO_CONTENT).end();
+          HttpResponse.responseText(ctx, HTTP_NO_CONTENT.toInt()).end();
           return (Void) null;
         }).recover(cause -> handleException(ctx, cause));
   }
@@ -95,7 +96,7 @@ public final class TenantAddressesService {
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .deleteTenantAddress(id)
         .map(x -> {
-          HttpResponse.responseText(ctx, HTTP_NO_CONTENT).end();
+          HttpResponse.responseText(ctx, HTTP_NO_CONTENT.toInt()).end();
           return null;
         });
   }
@@ -113,14 +114,14 @@ public final class TenantAddressesService {
 
   private static Future<Void> handleException(RoutingContext ctx, Throwable cause) {
     if (cause instanceof PgException pgException && "23505".equals(pgException.getSqlState())) {
-      HttpResponse.responseText(ctx, HTTP_CONFLICT).end("name already exists");
+      HttpResponse.responseText(ctx, HttpStatus.HTTP_UNPROCESSABLE_ENTITY.toInt()).end("name already exists");
       return Future.succeededFuture();
     }
     return Future.failedFuture(cause);
   }
 
   private static void response400(RoutingContext ctx, String msg) {
-    HttpResponse.responseText(ctx, HTTP_BAD_REQUEST).end(msg);
+    HttpResponse.responseText(ctx, HTTP_BAD_REQUEST.toInt()).end(msg);
   }
 
 }

@@ -98,7 +98,7 @@ public class TenantAddressesStorage {
             }
 
             if (isBlank(id)) {
-              return Future.succeededFuture();
+              continue;
             }
             deletions.add(webClient.deleteAbs(uri(tenantInitConf, "/configurations/entries/", id))
                 .putHeader(XOkapiHeaders.TENANT, tenantInitConf.tenant())
