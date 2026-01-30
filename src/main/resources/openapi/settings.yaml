@@ -62,8 +62,8 @@ paths:
                 $ref: schemas/tenantAddress.json
         "400":
           $ref: "#/components/responses/trait_400"
-        "409":
-          description: Tenant address name already exists
+        "422":
+          description: Tenant address validation error
         "500":
           $ref: "#/components/responses/trait_500"
   /tenant-addresses/{id}:
@@ -105,8 +105,8 @@ paths:
           $ref: "#/components/responses/trait_400"
         "404":
           $ref: "#/components/responses/trait_404"
-        "409":
-          description: Tenant address name already exists
+        "422":
+          description: Tenant address validation error
         "500":
           $ref: "#/components/responses/trait_500"
     delete:
