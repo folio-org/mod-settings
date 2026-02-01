@@ -1,0 +1,24 @@
+{
+  "description": "Tenant address entry",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Identifier",
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "description": "Display name for the address",
+      "type": "string"
+    },
+    "address": {
+      "description": "Address text",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "address"
+  ]
+}

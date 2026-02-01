@@ -51,6 +51,57 @@
       ]
     },
     {
+      "id": "tenant-addresses",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/tenant-addresses",
+          "permissionsRequired": [
+            "tenant-addresses.collection.get"
+          ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/tenant-addresses",
+          "permissionsRequired": [
+            "tenant-addresses.item.post"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/tenant-addresses/{id}",
+          "permissionsRequired": [
+            "tenant-addresses.item.get"
+          ]
+        },
+        {
+          "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/tenant-addresses/{id}",
+          "permissionsRequired": [
+            "tenant-addresses.item.put"
+          ]
+        },
+        {
+          "methods": [
+            "DELETE"
+          ],
+          "pathPattern": "/tenant-addresses/{id}",
+          "permissionsRequired": [
+            "tenant-addresses.item.delete"
+          ]
+        }
+      ]
+    },
+    {
       "id": "settings",
       "version": "1.2",
       "handlers": [
@@ -171,6 +222,43 @@
       "subPermissions": [
         "locale.item.get",
         "locale.item.put"
+      ]
+    },
+    {
+      "permissionName": "tenant-addresses.collection.get",
+      "displayName": "tenant addresses - get settings",
+      "description": "Get tenant addresses"
+    },
+    {
+      "permissionName": "tenant-addresses.item.get",
+      "displayName": "tenant addresses - get setting",
+      "description": "Get tenant address"
+    },
+    {
+      "permissionName": "tenant-addresses.item.post",
+      "displayName": "tenant addresses - create setting",
+      "description": "Create tenant address"
+    },
+    {
+      "permissionName": "tenant-addresses.item.put",
+      "displayName": "tenant addresses - update setting",
+      "description": "Update tenant address"
+    },
+    {
+      "permissionName": "tenant-addresses.item.delete",
+      "displayName": "tenant addresses - delete setting",
+      "description": "Delete tenant address"
+    },
+    {
+      "permissionName": "tenant-addresses.item.all",
+      "displayName": "tenant addresses - all permissions",
+      "description": "All tenant addresses permissions",
+      "subPermissions": [
+        "tenant-addresses.collection.get",
+        "tenant-addresses.item.get",
+        "tenant-addresses.item.post",
+        "tenant-addresses.item.put",
+        "tenant-addresses.item.delete"
       ]
     },
     {

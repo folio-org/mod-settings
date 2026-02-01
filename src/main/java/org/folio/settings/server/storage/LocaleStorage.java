@@ -93,13 +93,13 @@ public class LocaleStorage {
     }
 
     var webClient = WebClient.create(tenantInitConf.vertx());
-    return getFromModConfiguration(tenantInitConf, webClient)
+    return getAndDeleteFromModConfiguration(tenantInitConf, webClient)
         .compose(this::updateLocaleSanitized)
         .onComplete(x -> webClient.close())
         .mapEmpty();
   }
 
-  private static Future<LocaleSettings> getFromModConfiguration(
+  private static Future<LocaleSettings> getAndDeleteFromModConfiguration(
       TenantInitConf tenantInitConf, WebClient webClient) {
 
     var cql = "module==ORG AND configName==localeSettings NOT userId=\"\" NOT code=\"\"";
