@@ -32,11 +32,9 @@ public final class TenantAddressesService {
     var offset = getIntQuery(ctx, "offset", DEFAULT_OFFSET);
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .getTenantAddresses(offset, limit)
-        .map(tenantAddresses -> {
-          HttpResponse.responseJson(ctx, HTTP_OK.toInt())
-              .end(JsonObject.mapFrom(tenantAddresses).encode());
-          return null;
-        });
+        .onSuccess(tenantAddresses -> HttpResponse.responseJson(ctx, HTTP_OK.toInt())
+            .end(JsonObject.mapFrom(tenantAddresses).encode()))
+        .mapEmpty();
   }
 
   /**
@@ -46,11 +44,9 @@ public final class TenantAddressesService {
     var id = ctx.pathParam("id");
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .getTenantAddress(id)
-        .map(address -> {
-          HttpResponse.responseJson(ctx, HTTP_OK.toInt())
-              .end(JsonObject.mapFrom(address).encode());
-          return null;
-        });
+        .onSuccess(address -> HttpResponse.responseJson(ctx, HTTP_OK.toInt())
+            .end(JsonObject.mapFrom(address).encode()))
+        .mapEmpty();
   }
 
   /**
@@ -65,11 +61,10 @@ public final class TenantAddressesService {
 
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .createTenantAddress(tenantAddress)
-        .map(created -> {
-          HttpResponse.responseJson(ctx, HTTP_CREATED.toInt())
-              .end(JsonObject.mapFrom(created).encode());
-          return (Void) null;
-        }).recover(cause -> handleException(ctx, cause));
+        .onSuccess(created -> HttpResponse.responseJson(ctx, HTTP_CREATED.toInt())
+            .end(JsonObject.mapFrom(created).encode()))
+        .<Void>mapEmpty()
+        .recover(cause -> handleException(ctx, cause));
   }
 
   /**
@@ -84,10 +79,9 @@ public final class TenantAddressesService {
     }
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .updateTenantAddress(id, tenantAddress)
-        .map(x -> {
-          HttpResponse.responseText(ctx, HTTP_NO_CONTENT.toInt()).end();
-          return (Void) null;
-        }).recover(cause -> handleException(ctx, cause));
+        .onSuccess(x -> HttpResponse.responseText(ctx, HTTP_NO_CONTENT.toInt()).end())
+        .<Void>mapEmpty()
+        .recover(cause -> handleException(ctx, cause));
   }
 
   /**
@@ -97,10 +91,7 @@ public final class TenantAddressesService {
     var id = ctx.pathParam("id");
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .deleteTenantAddress(id)
-        .map(x -> {
-          HttpResponse.responseText(ctx, HTTP_NO_CONTENT.toInt()).end();
-          return null;
-        });
+        .onSuccess(x -> HttpResponse.responseText(ctx, HTTP_NO_CONTENT.toInt()).end());
   }
 
   private static int getIntQuery(RoutingContext ctx, String name, int defaultValue) {
