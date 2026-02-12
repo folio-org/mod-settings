@@ -27,6 +27,30 @@
       ]
     },
     {
+      "id": "base-url",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/base-url",
+          "permissionsRequired": [
+            "base-url.item.get"
+          ]
+        },
+        {
+          "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/base-url",
+          "permissionsRequired": [
+            "base-url.item.put"
+          ]
+        }
+      ]
+    },
+    {
       "id": "locale",
       "version": "1.0",
       "handlers": [
@@ -205,6 +229,25 @@
     }
   ],
   "permissionSets": [
+    {
+      "permissionName": "base-url.item.get",
+      "displayName": "front-end user interface base url - get",
+      "description": "Get front-end user interface base url"
+    },
+    {
+      "permissionName": "base-url.item.put",
+      "displayName": "front-end user interface base url - update",
+      "description": "Update front-end user interface base url setting"
+    },
+    {
+      "permissionName": "base-url.item.all",
+      "displayName": "front-end user interface base-url - all permissions",
+      "description": "All front-end user interface base-url permissions",
+      "subPermissions": [
+        "base-url.item.get",
+        "base-url.item.put"
+      ]
+    },
     {
       "permissionName": "locale.item.get",
       "displayName": "locale - get setting",
