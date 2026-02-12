@@ -19,14 +19,13 @@ import org.folio.tlib.postgres.testing.TenantPgPoolContainer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class TestBase {
-  protected final static Logger log = LogManager.getLogger("TestBase");
+  protected static final Logger log = LogManager.getLogger("TestBase");
   protected static Vertx vertx;
   protected static WebClient webClient;
   protected static final int OKAPI_PORT = 9230;
@@ -51,7 +50,7 @@ public class TestBase {
   }
 
   @BeforeClass
-  public static void beforeClass(TestContext context) throws IOException, SAXException {
+  public static void beforeClass(TestContext context) throws IOException {
     postgresSQLContainer = TenantPgPoolContainer.create();
 
     vertx = Vertx.vertx();

@@ -10,9 +10,7 @@ import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.okapi.common.HttpResponse;
-import org.folio.settings.server.data.LocaleSettings;
 import org.folio.settings.server.storage.BaseUrlStorage;
-import org.folio.settings.server.storage.LocaleStorage;
 import org.folio.tlib.util.TenantUtil;
 
 public final class BaseUrlService {
