@@ -94,7 +94,7 @@ public class BaseUrlStorage {
   private static Future<String> getAndDeleteFromModConfiguration(
       TenantInitConf tenantInitConf, WebClient webClient) {
 
-    var cql = "module==USERSBL AND configName==FOLIO_HOST";
+    var cql = "module==USERSBL AND code==FOLIO_HOST";
     return webClient.getAbs(uri(tenantInitConf, "/configurations/entries?query=", cql))
         .putHeader(XOkapiHeaders.TENANT, tenantInitConf.tenant())
         .putHeader(XOkapiHeaders.TOKEN, tenantInitConf.token())
