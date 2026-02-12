@@ -105,7 +105,7 @@ public class BaseUrlStorage {
           }
           var config = httpResponse.bodyAsJsonObject().getJsonArray("configs").getJsonObject(0);
           var id = config.getString("id");
-          var baseUrl = config.getString("value").replaceAll("/+$", "");  // strip tailing slashes
+          var baseUrl = stripTrailingSlashes(config.getString("value"));
 
           return webClient.deleteAbs(uri(tenantInitConf, "/configurations/entries/", id))
               .putHeader(XOkapiHeaders.TENANT, tenantInitConf.tenant())
@@ -119,6 +119,14 @@ public class BaseUrlStorage {
 
   private static String uri(TenantInitConf tenantInitConf, String path, String toEncode) {
     return tenantInitConf.okapiUrl() + path + PercentCodec.encode(toEncode);
+  }
+
+  static String stripTrailingSlashes(String url) {
+    var end = url.length();
+    while (end > 0 && url.charAt(end - 1) == '/') {
+      end--;
+    }
+    return url.substring(0, end);
   }
 
   /**

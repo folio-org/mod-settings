@@ -16,6 +16,7 @@ import io.vertx.sqlclient.Tuple;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.settings.server.TestContainersSupport;
 import org.folio.settings.server.main.MainVerticle;
+import org.folio.settings.server.storage.BaseUrlStorage;
 import org.folio.tlib.postgres.TenantPgPool;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
