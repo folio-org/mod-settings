@@ -5,6 +5,7 @@ import static org.folio.settings.server.util.StringUtil.isBlank;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.Json;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.sqlclient.Tuple;
 import java.util.List;
@@ -113,8 +114,8 @@ public class LocaleStorage {
           }
           var config = httpResponse.bodyAsJsonObject().getJsonArray("configs").getJsonObject(0);
           var id = config.getString("id");
-          config.remove("id");
-          var localeSettings = config.mapTo(LocaleSettings.class);
+          var value = config.getString("value");
+          var localeSettings = Json.decodeValue(value, LocaleSettings.class);
           return webClient.deleteAbs(uri(tenantInitConf, "/configurations/entries/", id))
               .putHeader(XOkapiHeaders.TENANT, tenantInitConf.tenant())
               .putHeader(XOkapiHeaders.TOKEN, tenantInitConf.token())
@@ -122,7 +123,7 @@ public class LocaleStorage {
               .otherwiseEmpty()  // ignore DELETE failure
               .map(localeSettings);
         })
-        .otherwise((LocaleSettings) null);
+        .otherwiseEmpty();
   }
 
   private static String uri(TenantInitConf tenantInitConf, String path, String toEncode) {
