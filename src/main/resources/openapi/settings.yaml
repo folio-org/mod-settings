@@ -3,6 +3,38 @@ info:
   title: Settings
   version: v1
 paths:
+  /base-url:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+    get:
+      description: Get the base URL of the front-end user interface.
+      operationId: getBaseUrl
+      responses:
+        "200":
+          description: Front-end user interface URL without tailing slash
+          content:
+            application/json:
+              schema:
+                $ref: schemas/baseUrl.json
+              example: {"baseUrl": "https://folio.example.com"}
+        "500":
+          $ref: "#/components/responses/trait_500"
+    put:
+      description: Set the base URL of the front-end user interface.
+      operationId: setBaseUrl
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas/baseUrl.json
+            example: {"baseUrl": "https://folio.example.com"}
+      responses:
+        "204":
+          description: Base URL updated
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "500":
+          $ref: "#/components/responses/trait_500"
   /locale:
     parameters:
       - $ref: headers/okapi-tenant.yaml
@@ -21,6 +53,11 @@ paths:
     put:
       description: Set the locale settings for the tenant.
       operationId: setLocale
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas/locale.json
       responses:
         "204":
           description: Locale settings updated

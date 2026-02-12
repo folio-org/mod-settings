@@ -1,0 +1,14 @@
+{
+  "description": "List of key/value parameters of an error",
+  "type": "object",
+  "properties": {
+    "baseUrl": {
+      "description": "Front-end user interface URL without tailing slash",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "baseUrl"
+  ]
+}
