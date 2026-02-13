@@ -30,7 +30,11 @@ class LocaleServiceTest implements TestContainersSupport {
       {
         "configs": [
           {
-            "locale": "es-ES"
+            "id": "5c3bcb2a-f2b0-4ada-b731-22a05c4a2273",
+            "module": "ORG",
+            "configName": "localeSettings",
+            "enabled": true,
+            "value": "{\\"locale\\":\\"es-ES\\",\\"currency\\":\\"ESP\\"}"
           }
         ]
       }
