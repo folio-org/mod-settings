@@ -17,6 +17,7 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.HttpResponse;
+import org.folio.settings.server.service.BaseUrlService;
 import org.folio.settings.server.service.LocaleService;
 import org.folio.settings.server.service.SettingsService;
 import org.folio.settings.server.service.TenantAddressesService;
@@ -88,6 +89,8 @@ public class RouterImpl implements RouterCreator {
   }
 
   private void handlers(RouterBuilder routerBuilder) {
+    route(routerBuilder, "getBaseUrl", BaseUrlService::getBaseUrl);
+    route(routerBuilder, "setBaseUrl", BaseUrlService::setBaseUrl);
     route(routerBuilder, "getLocale", LocaleService::getLocale);
     route(routerBuilder, "setLocale", LocaleService::setLocale);
     route(routerBuilder, "getTenantAddresses", TenantAddressesService::getTenantAddresses);
