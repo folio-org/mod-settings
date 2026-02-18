@@ -5,6 +5,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.matchesPattern;
+import static org.hamcrest.Matchers.notNullValue;
 
 import io.restassured.RestAssured;
 import io.vertx.core.Future;
@@ -24,6 +26,11 @@ import java.util.List;
 import java.util.UUID;
 
 class TenantAddressesServiceTest implements TestContainersSupport {
+
+  private static final String TEST_USER_ID = "11111111-1111-1111-1111-111111111111";
+  private static final String ISO_DATETIME_PATTERN =
+      "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{2,6}\\+00:00";
+  private static final String TENANT = "diku";
 
   public static final String ADDRESS_CONFIGS = """
       {
@@ -45,7 +52,7 @@ class TenantAddressesServiceTest implements TestContainersSupport {
     RestAssured.baseURI = "http://localhost:8081";
     vertx.deployVerticle(new MainVerticle())
         .compose(x -> deployModConfigurationMock(vertx))
-        .compose(x -> postTenant(vertx, "http://localhost:8081", "diku", "1.3.0"))
+        .compose(x -> postTenant(vertx, "http://localhost:8081", TENANT, "1.3.0"))
         .onComplete(vtc.succeedingThenComplete());
   }
 
@@ -73,20 +80,24 @@ class TenantAddressesServiceTest implements TestContainersSupport {
   void createTenantAddress() {
     var name = uniqueName("address");
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, "diku")
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .header(XOkapiHeaders.USER_ID, TEST_USER_ID)
         .header("Content-Type", "application/json")
         .body(JsonObject.of("name", name, "address", "address1-full").encode())
         .post("/tenant-addresses")
         .then()
         .statusCode(201)
         .body("name", is(name))
-        .body("address", is("address1-full"));
+        .body("address", is("address1-full"))
+        .body("metadata", notNullValue())
+        .body("metadata.updatedByUserId", is(TEST_USER_ID))
+        .body("metadata.updatedDate", matchesPattern(ISO_DATETIME_PATTERN));
   }
 
   @Test
   void createMissingAddressFields() {
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, "diku")
+        .header(XOkapiHeaders.TENANT, TENANT)
         .header("Content-Type", "application/json")
         .body(JsonObject.of("name", " ", "address", "address1-full").encode())
         .post("/tenant-addresses")
@@ -99,7 +110,7 @@ class TenantAddressesServiceTest implements TestContainersSupport {
   void createDuplicateNameConflict() {
     var name = uniqueName("address-unique");
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, "diku")
+        .header(XOkapiHeaders.TENANT, TENANT)
         .header("Content-Type", "application/json")
         .body(JsonObject.of("name", name, "address", "address-unique-full").encode())
         .post("/tenant-addresses")
@@ -107,7 +118,7 @@ class TenantAddressesServiceTest implements TestContainersSupport {
         .statusCode(201);
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, "diku")
+        .header(XOkapiHeaders.TENANT, TENANT)
         .header("Content-Type", "application/json")
         .body(JsonObject.of("name", name, "address", "address-unique-full2").encode())
         .post("/tenant-addresses")
@@ -118,28 +129,28 @@ class TenantAddressesServiceTest implements TestContainersSupport {
 
   @Test
   void getTenantAddresses() {
-    var baseTotal = getTotalRecords("diku");
+    var baseTotal = getTotalRecords(TENANT);
     var name1 = uniqueName("address");
     var name2 = uniqueName("address");
-    createAddress("diku", name1, "address1-full");
-    createAddress("diku", name2, "address2-full");
+    createAddress(name1, "address1-full");
+    createAddress(name2, "address2-full");
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, "diku")
+        .header(XOkapiHeaders.TENANT, TENANT)
         .get("/tenant-addresses?limit=1&offset=0")
         .then()
         .statusCode(200)
         .body("addresses.size()", is(1));
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, "diku")
+        .header(XOkapiHeaders.TENANT, TENANT)
         .get("/tenant-addresses?limit=1&offset=1")
         .then()
         .statusCode(200)
         .body("addresses.size()", is(1));
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, "diku")
+        .header(XOkapiHeaders.TENANT, TENANT)
         .get("/tenant-addresses")
         .then()
         .statusCode(200)
@@ -150,25 +161,29 @@ class TenantAddressesServiceTest implements TestContainersSupport {
   @Test
   void getTenantAddressById() {
     var name = uniqueName("address");
-    var createdId = createAddress("diku", name, "address1-full");
+    var createdId = createAddress(name, "address1-full");
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, "diku")
+        .header(XOkapiHeaders.TENANT, TENANT)
         .get("/tenant-addresses/" + createdId)
         .then()
         .statusCode(200)
         .body("name", is(name))
-        .body("address", is("address1-full"));
+        .body("address", is("address1-full"))
+        .body("metadata", notNullValue())
+        .body("metadata.updatedByUserId", is(TEST_USER_ID))
+        .body("metadata.updatedDate", matchesPattern(ISO_DATETIME_PATTERN));
   }
 
   @Test
   void updateTenantAddressById() {
-    var createdId = createAddress("diku", uniqueName("address"), "address1-full");
+    var createdId = createAddress(uniqueName("address"), "address1-full");
     var newName = uniqueName("address");
     var newAddress = "address1-full-updated";
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, "diku")
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .header(XOkapiHeaders.USER_ID, TEST_USER_ID)
         .header("Content-Type", "application/json")
         .body(JsonObject.of("name", newName, "address", newAddress).encode())
         .put("/tenant-addresses/" + createdId)
@@ -176,34 +191,38 @@ class TenantAddressesServiceTest implements TestContainersSupport {
         .statusCode(204);
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, "diku")
+        .header(XOkapiHeaders.TENANT, TENANT)
         .get("/tenant-addresses/" + createdId)
         .then()
         .statusCode(200)
         .body("name", is(newName))
-        .body("address", is(newAddress));
+        .body("address", is(newAddress))
+        .body("metadata", notNullValue())
+        .body("metadata.updatedByUserId", is(TEST_USER_ID))
+        .body("metadata.updatedDate", matchesPattern(ISO_DATETIME_PATTERN));
   }
 
   @Test
   void deleteTenantAddressById() {
-    var createdId = createAddress("diku", uniqueName("address"), "address1-full");
+    var createdId = createAddress(uniqueName("address"), "address1-full");
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, "diku")
+        .header(XOkapiHeaders.TENANT, TENANT)
         .delete("/tenant-addresses/" + createdId)
         .then()
         .statusCode(204);
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, "diku")
+        .header(XOkapiHeaders.TENANT, TENANT)
         .get("/tenant-addresses/" + createdId)
         .then()
         .statusCode(404);
   }
 
-  private String createAddress(String tenant, String name, String address) {
+  private String createAddress(String name, String address) {
     return RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant)
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .header(XOkapiHeaders.USER_ID, TEST_USER_ID)
         .header("Content-Type", "application/json")
         .body(JsonObject.of("name", name, "address", address).encode())
         .post("/tenant-addresses")
@@ -226,5 +245,4 @@ class TenantAddressesServiceTest implements TestContainersSupport {
   private String uniqueName(String prefix) {
     return prefix + "-" + UUID.randomUUID();
   }
-
 }

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 import org.folio.okapi.common.SemVer;
 import org.folio.okapi.common.XOkapiHeaders;
+import org.folio.settings.server.data.Metadata;
 import org.folio.settings.server.data.TenantAddress;
 import org.folio.settings.server.data.TenantAddresses;
 import org.folio.tlib.TenantInitConf;
@@ -48,10 +49,15 @@ public class TenantAddressesStorage {
   private Future<Void> initTable() {
     return pool.execute(List.of(
         """
-        CREATE TABLE IF NOT EXISTS %s
-          (id uuid PRIMARY KEY,
-           name text UNIQUE NOT NULL,
-           address text NOT NULL)
+          CREATE TABLE IF NOT EXISTS %s
+            (id uuid PRIMARY KEY,
+             name text UNIQUE NOT NULL,
+             address text NOT NULL)
+        """.formatted(addressesTable),
+        """
+          ALTER TABLE IF EXISTS %s
+            ADD COLUMN IF NOT EXISTS updatedbyuserid uuid,
+            ADD COLUMN IF NOT EXISTS updateddate timestamptz;
         """.formatted(addressesTable)
     ));
   }
@@ -147,7 +153,7 @@ public class TenantAddressesStorage {
    * Get tenant addresses.
    */
   public Future<TenantAddresses> getTenantAddresses(int offset, int limit) {
-    return pool.preparedQuery(("SELECT id, name, address FROM %s "
+    return pool.preparedQuery(("SELECT id, name, address, updatedbyuserid, updateddate FROM %s "
             + "ORDER BY name LIMIT $1 OFFSET $2").formatted(addressesTable))
         .execute(Tuple.of(limit, offset))
         .map(this::mapToTenantAddresses)
@@ -158,8 +164,9 @@ public class TenantAddressesStorage {
    * Get tenant address by id.
    */
   public Future<TenantAddress> getTenantAddress(String id) {
-    return pool.preparedQuery("SELECT id, name, address FROM %s WHERE id = $1"
-            .formatted(addressesTable))
+    return pool.preparedQuery(
+            ("SELECT id, name, address, updatedbyuserid, updateddate FROM %s "
+                + "WHERE id = $1").formatted(addressesTable))
         .execute(Tuple.of(UUID.fromString(id)))
         .compose(this::mapToTenantAddress);
   }
@@ -169,9 +176,12 @@ public class TenantAddressesStorage {
    */
   public Future<TenantAddress> createTenantAddress(TenantAddress address) {
     updateTenantAddressIdIfNeeded(address, address.getId());
-    return pool.preparedQuery("INSERT INTO %s (id, name, address) VALUES ($1, $2, $3)"
-            .formatted(addressesTable))
-        .execute(Tuple.of(address.getId(), address.getName(), address.getAddress()))
+    return pool.preparedQuery(
+            ("INSERT INTO %s (id, name, address, updatedbyuserid, updateddate) "
+                + "VALUES ($1, $2, $3, $4, $5)").formatted(addressesTable))
+        .execute(Tuple.of(address.getId(), address.getName(), address.getAddress(),
+            address.getMetadata().getUpdatedByUserId(),
+            address.getMetadata().getUpdatedDate()))
         .map(address);
   }
 
@@ -179,9 +189,12 @@ public class TenantAddressesStorage {
    * Update tenant address.
    */
   public Future<Void> updateTenantAddress(String id, TenantAddress address) {
-    return pool.preparedQuery("UPDATE %s SET name = $1, address = $2 WHERE id = $3"
-            .formatted(addressesTable))
-        .execute(Tuple.of(address.getName(), address.getAddress(), UUID.fromString(id)))
+    return pool.preparedQuery(
+            ("UPDATE %s SET name = $1, address = $2, updatedbyuserid = $3, "
+                + "updateddate = $4 WHERE id = $5").formatted(addressesTable))
+        .execute(Tuple.of(address.getName(), address.getAddress(),
+            address.getMetadata().getUpdatedByUserId(),
+            address.getMetadata().getUpdatedDate(), UUID.fromString(id)))
         .compose(this::validateRowCount);
   }
 
@@ -199,7 +212,9 @@ public class TenantAddressesStorage {
     rowSet.forEach(row -> addresses.add(new TenantAddress(
         row.getUUID("id").toString(),
         row.getString("name"),
-        row.getString("address"))));
+        row.getString("address"),
+        new Metadata(row.getUUID("updatedbyuserid"),
+            row.getOffsetDateTime("updateddate")))));
     return addresses;
   }
 

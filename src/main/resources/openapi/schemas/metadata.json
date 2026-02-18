@@ -1,0 +1,20 @@
+{
+  "description": "Metadata containing user and date information",
+  "type": "object",
+  "properties": {
+    "updatedByUserId": {
+      "description": "Updated by user id",
+      "type": "string",
+      "format": "uuid"
+    },
+    "updatedDate": {
+      "description": "Update date",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "updatedByUserId",
+    "updatedDate"
+  ]
+}

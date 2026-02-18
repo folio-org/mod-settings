@@ -8,9 +8,7 @@ public class TenantAddress {
   private String id;
   private String name;
   private String address;
-
-  public TenantAddress() {
-  }
+  private Metadata metadata;
 
   /**
    * Create a tenant address.
@@ -19,10 +17,11 @@ public class TenantAddress {
    * @param name address name
    * @param address address value
    */
-  public TenantAddress(String id, String name, String address) {
+  public TenantAddress(String id, String name, String address, Metadata metadata) {
     this.id = id;
     this.name = name;
     this.address = address;
+    this.metadata = metadata;
   }
 
   public String getId() {
@@ -47,5 +46,13 @@ public class TenantAddress {
 
   public void setAddress(String address) {
     this.address = address;
+  }
+
+  public Metadata getMetadata() {
+    return metadata;
+  }
+
+  public void setMetadata(Metadata metadata) {
+    this.metadata = metadata;
   }
 }

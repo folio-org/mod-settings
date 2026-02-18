@@ -14,6 +14,11 @@
     "address": {
       "description": "Address text",
       "type": "string"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadata containing user and date information",
+      "$ref": "metadata.json"
     }
   },
   "additionalProperties": false,

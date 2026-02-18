@@ -5,21 +5,32 @@ import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_OK;
 import static org.folio.settings.server.util.StringUtil.isBlank;
+import static org.folio.settings.server.util.TimeUtil.getTruncatedOffsetDateTime;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import io.vertx.core.Future;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.pgclient.PgException;
 import org.folio.HttpStatus;
 import org.folio.okapi.common.HttpResponse;
+import org.folio.settings.server.data.Metadata;
 import org.folio.settings.server.data.TenantAddress;
 import org.folio.settings.server.storage.TenantAddressesStorage;
+import org.folio.settings.server.util.TimeUtil;
+import org.folio.settings.server.util.UserUtil;
 import org.folio.tlib.util.TenantUtil;
+
 
 public final class TenantAddressesService {
 
   private static final int DEFAULT_LIMIT = 50;
   private static final int DEFAULT_OFFSET = 0;
+
+  private static final ObjectMapper objectMapper = new ObjectMapper()
+      .registerModule(TimeUtil.createJavaTimeModule())
+      .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
   private TenantAddressesService() {
   }
@@ -32,8 +43,14 @@ public final class TenantAddressesService {
     var offset = getIntQuery(ctx, "offset", DEFAULT_OFFSET);
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .getTenantAddresses(offset, limit)
-        .onSuccess(tenantAddresses -> HttpResponse.responseJson(ctx, HTTP_OK.toInt())
-            .end(JsonObject.mapFrom(tenantAddresses).encode()))
+        .onSuccess(tenantAddresses -> {
+          try {
+            HttpResponse.responseJson(ctx, HTTP_OK.toInt())
+                .end(objectMapper.writeValueAsString(tenantAddresses));
+          } catch (JsonProcessingException e) {
+            response400(ctx, "Error processing JSON");
+          }
+        })
         .mapEmpty();
   }
 
@@ -44,8 +61,14 @@ public final class TenantAddressesService {
     var id = ctx.pathParam("id");
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .getTenantAddress(id)
-        .onSuccess(address -> HttpResponse.responseJson(ctx, HTTP_OK.toInt())
-            .end(JsonObject.mapFrom(address).encode()))
+        .onSuccess(address -> {
+          try {
+            HttpResponse.responseJson(ctx, HTTP_OK.toInt())
+                .end(objectMapper.writeValueAsString(address));
+          } catch (JsonProcessingException e) {
+            response400(ctx, "Error processing JSON");
+          }
+        })
         .mapEmpty();
   }
 
@@ -58,11 +81,17 @@ public final class TenantAddressesService {
       response400(ctx, "name or address missing");
       return Future.succeededFuture();
     }
-
+    tenantAddress.setMetadata(new Metadata(UserUtil.getUserId(ctx), getTruncatedOffsetDateTime()));
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .createTenantAddress(tenantAddress)
-        .onSuccess(created -> HttpResponse.responseJson(ctx, HTTP_CREATED.toInt())
-            .end(JsonObject.mapFrom(created).encode()))
+        .onSuccess(created -> {
+          try {
+            HttpResponse.responseJson(ctx, HTTP_CREATED.toInt())
+                .end(objectMapper.writeValueAsString(created));
+          } catch (JsonProcessingException e) {
+            response400(ctx, "Error processing JSON");
+          }
+        })
         .<Void>mapEmpty()
         .recover(cause -> handleException(ctx, cause));
   }
@@ -77,6 +106,7 @@ public final class TenantAddressesService {
       response400(ctx, "name or address missing");
       return Future.succeededFuture();
     }
+    tenantAddress.setMetadata(new Metadata(UserUtil.getUserId(ctx), getTruncatedOffsetDateTime()));
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .updateTenantAddress(id, tenantAddress)
         .onSuccess(x -> HttpResponse.responseText(ctx, HTTP_NO_CONTENT.toInt()).end())

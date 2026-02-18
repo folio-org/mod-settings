@@ -14,6 +14,7 @@ import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.settings.server.data.Entry;
 import org.folio.settings.server.storage.SettingsStorage;
 import org.folio.settings.server.storage.UserException;
+import org.folio.settings.server.util.UserUtil;
 import org.folio.tlib.util.TenantUtil;
 
 public final class SettingsService {
@@ -25,11 +26,7 @@ public final class SettingsService {
 
   static SettingsStorage create(RoutingContext ctx) {
     // get user Id
-    String userIdParameter = ctx.request().getHeader(XOkapiHeaders.USER_ID);
-    UUID currentUserId = null;
-    if (userIdParameter != null) {
-      currentUserId = UUID.fromString(userIdParameter);
-    }
+    UUID currentUserId = UserUtil.getUserId(ctx);
 
     // get permissions which is required in OpenAPI spec
     String okapiPermissions = ctx.request().getHeader(XOkapiHeaders.PERMISSIONS);
