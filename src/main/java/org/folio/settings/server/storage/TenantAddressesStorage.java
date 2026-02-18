@@ -236,5 +236,4 @@ public class TenantAddressesStorage {
     }
     return address;
   }
-
 }

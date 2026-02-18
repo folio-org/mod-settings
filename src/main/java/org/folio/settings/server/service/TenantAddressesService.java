@@ -22,7 +22,6 @@ import org.folio.settings.server.util.TimeUtil;
 import org.folio.settings.server.util.UserUtil;
 import org.folio.tlib.util.TenantUtil;
 
-
 public final class TenantAddressesService {
 
   private static final int DEFAULT_LIMIT = 50;
@@ -147,5 +146,4 @@ public final class TenantAddressesService {
   private static void response400(RoutingContext ctx, String msg) {
     HttpResponse.responseText(ctx, HTTP_BAD_REQUEST.toInt()).end(msg);
   }
-
 }
