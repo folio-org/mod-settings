@@ -182,8 +182,8 @@ public class TenantAddressesStorage {
             ("INSERT INTO %s (id, name, address, updatedbyuserid, updateddate) "
                 + "VALUES ($1, $2, $3, $4, $5)").formatted(addressesTable))
         .execute(Tuple.of(address.getId(), address.getName(), address.getAddress(),
-            address.getMetadata().getUpdatedByUserId(),
-            address.getMetadata().getUpdatedDate()))
+            address.getMetadata().updatedByUserId(),
+            address.getMetadata().updatedDate()))
         .map(address);
   }
 
@@ -195,8 +195,8 @@ public class TenantAddressesStorage {
             ("UPDATE %s SET name = $1, address = $2, updatedbyuserid = $3, "
                 + "updateddate = $4 WHERE id = $5").formatted(addressesTable))
         .execute(Tuple.of(address.getName(), address.getAddress(),
-            address.getMetadata().getUpdatedByUserId(),
-            address.getMetadata().getUpdatedDate(), UUID.fromString(id)))
+            address.getMetadata().updatedByUserId(),
+            address.getMetadata().updatedDate(), UUID.fromString(id)))
         .compose(this::validateRowCount);
   }
 
