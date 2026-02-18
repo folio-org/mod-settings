@@ -10,12 +10,16 @@ public class TenantAddress {
   private String address;
   private Metadata metadata;
 
+  public TenantAddress() {
+  }
+
   /**
    * Create a tenant address.
    *
    * @param id address id
    * @param name address name
    * @param address address value
+   * @param metadata metadata with user and timestamp information
    */
   public TenantAddress(String id, String name, String address, Metadata metadata) {
     this.id = id;
