@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 import io.restassured.RestAssured;
 import io.vertx.core.Future;
@@ -74,6 +75,27 @@ class TenantAddressesServiceTest implements TestContainersSupport {
     postTenant("http://localhost:8083", "migration", "1.3.0");
 
     assertThat(getTotalRecords("migration"), is(2));
+  }
+
+  @Test
+  void getAddressWithoutMetadata(Vertx vertx, VertxTestContext vtc) {
+    var addressId = UUID.randomUUID().toString();
+    var addressName = uniqueName("no-metadata");
+
+    // Insert address directly into database without metadata fields
+    var pool = org.folio.tlib.postgres.TenantPgPool.pool(vertx, TENANT);
+    pool.preparedQuery("INSERT INTO " + pool.getSchema() + ".tenant_addresses (id, name, address) VALUES ($1, $2, $3)")
+        .execute(io.vertx.sqlclient.Tuple.of(UUID.fromString(addressId), addressName, "test-address"))
+        .onComplete(vtc.succeeding(x -> {
+          // Verify GET response excludes metadata field
+          RestAssured.given()
+              .header(XOkapiHeaders.TENANT, TENANT)
+              .get("/tenant-addresses/" + addressId)
+              .then()
+              .statusCode(200)
+              .body("metadata", nullValue());
+          vtc.completeNow();
+        }));
   }
 
   @Test

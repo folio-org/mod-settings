@@ -10,8 +10,10 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.folio.okapi.common.SemVer;
 import org.folio.okapi.common.XOkapiHeaders;
@@ -209,13 +211,22 @@ public class TenantAddressesStorage {
 
   private List<TenantAddress> mapToTenantAddresses(RowSet<Row> rowSet) {
     var addresses = new ArrayList<TenantAddress>();
-    rowSet.forEach(row -> addresses.add(new TenantAddress(
-        row.getUUID("id").toString(),
-        row.getString("name"),
-        row.getString("address"),
-        new Metadata(row.getUUID("updatedbyuserid"),
-            row.getOffsetDateTime("updateddate")))));
+    rowSet.forEach(row -> {
+      var updatedByUserId = row.getUUID("updatedbyuserid");
+      var updatedDate = row.getOffsetDateTime("updateddate");
+      addresses.add(new TenantAddress(
+          row.getUUID("id").toString(),
+          row.getString("name"),
+          row.getString("address"),
+          mapMetadata(updatedByUserId, updatedDate)));
+    });
     return addresses;
+  }
+
+  private Metadata mapMetadata(UUID updatedByUserId, OffsetDateTime updatedDate) {
+    return Objects.nonNull(updatedByUserId) && Objects.nonNull(updatedDate)
+        ? new Metadata(updatedByUserId, updatedDate)
+        : null;
   }
 
   private Future<TenantAddress> mapToTenantAddress(RowSet<Row> rowSet) {
