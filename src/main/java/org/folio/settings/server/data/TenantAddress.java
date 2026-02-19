@@ -8,6 +8,7 @@ public class TenantAddress {
   private String id;
   private String name;
   private String address;
+  private Metadata metadata;
 
   public TenantAddress() {
   }
@@ -18,11 +19,13 @@ public class TenantAddress {
    * @param id address id
    * @param name address name
    * @param address address value
+   * @param metadata metadata with user and timestamp information
    */
-  public TenantAddress(String id, String name, String address) {
+  public TenantAddress(String id, String name, String address, Metadata metadata) {
     this.id = id;
     this.name = name;
     this.address = address;
+    this.metadata = metadata;
   }
 
   public String getId() {
@@ -47,5 +50,13 @@ public class TenantAddress {
 
   public void setAddress(String address) {
     this.address = address;
+  }
+
+  public Metadata getMetadata() {
+    return metadata;
+  }
+
+  public void setMetadata(Metadata metadata) {
+    this.metadata = metadata;
   }
 }

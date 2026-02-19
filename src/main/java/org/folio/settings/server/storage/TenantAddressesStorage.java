@@ -10,11 +10,13 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.folio.okapi.common.SemVer;
 import org.folio.okapi.common.XOkapiHeaders;
+import org.folio.settings.server.data.Metadata;
 import org.folio.settings.server.data.TenantAddress;
 import org.folio.settings.server.data.TenantAddresses;
 import org.folio.tlib.TenantInitConf;
@@ -48,10 +50,14 @@ public class TenantAddressesStorage {
   private Future<Void> initTable() {
     return pool.execute(List.of(
         """
-        CREATE TABLE IF NOT EXISTS %s
-          (id uuid PRIMARY KEY,
-           name text UNIQUE NOT NULL,
-           address text NOT NULL)
+          CREATE TABLE IF NOT EXISTS %s
+            (id uuid PRIMARY KEY,
+             name text UNIQUE NOT NULL,
+             address text NOT NULL,
+             createdbyuserid uuid,
+             createddate timestamp,
+             updatedbyuserid uuid,
+             updateddate timestamp)
         """.formatted(addressesTable)
     ));
   }
@@ -92,7 +98,8 @@ public class TenantAddressesStorage {
             var config = configs.getJsonObject(i);
             var id = config.getString("id");
             var value = config.getString("value");
-            var parsed = parseAddress(id, value);
+            var metadata = config.getJsonObject("metadata");
+            var parsed = parseAddress(id, value, metadata);
             if (parsed != null) {
               addresses.add(parsed);
             }
@@ -115,15 +122,27 @@ public class TenantAddressesStorage {
         .otherwiseEmpty();
   }
 
-  private static TenantAddress parseAddress(String id, String value) {
+  private static TenantAddress parseAddress(String id, String value, JsonObject metadata) {
     try {
       var tenantAddress = new JsonObject(value).mapTo(TenantAddress.class);
+      setMetadata(metadata, tenantAddress);
       return isBlank(tenantAddress.getName())
           ? null
           : updateTenantAddressIdIfNeeded(tenantAddress, id);
     } catch (Exception e) {
       return null;
     }
+  }
+
+  private static void setMetadata(JsonObject metadata, TenantAddress tenantAddress) {
+    var createdByUserId = UUID.fromString(metadata.getString("createdByUserId"));
+    var createdDate =
+        OffsetDateTime.parse(metadata.getString("createdDate")).toLocalDateTime();
+    var updatedByUserId = UUID.fromString(metadata.getString("updatedByUserId"));
+    var updatedDate =
+        OffsetDateTime.parse(metadata.getString("updatedDate")).toLocalDateTime();
+    tenantAddress.setMetadata(
+        new Metadata(createdByUserId, createdDate, updatedByUserId, updatedDate));
   }
 
   private static String uri(TenantInitConf tenantInitConf, String path, String toEncode) {
@@ -137,9 +156,14 @@ public class TenantAddressesStorage {
   }
 
   private Future<Void> insertMigratedAddress(TenantAddress address) {
-    return pool.preparedQuery(("INSERT INTO %s (id, name, address) VALUES ($1, $2, $3) "
+    return pool.preparedQuery(("INSERT INTO %s (id, name, address, createdbyuserid, createddate, "
+            + "updatedbyuserid, updateddate) VALUES ($1, $2, $3, $4, $5, $6, $7) "
             + "ON CONFLICT (name) DO NOTHING").formatted(addressesTable))
-        .execute(Tuple.of(address.getId(), address.getName(), address.getAddress()))
+        .execute(Tuple.of(address.getId(), address.getName(), address.getAddress(),
+            address.getMetadata().createdByUserId(),
+            address.getMetadata().createdDate(),
+            address.getMetadata().updatedByUserId(),
+            address.getMetadata().updatedDate()))
         .mapEmpty();
   }
 
@@ -147,8 +171,9 @@ public class TenantAddressesStorage {
    * Get tenant addresses.
    */
   public Future<TenantAddresses> getTenantAddresses(int offset, int limit) {
-    return pool.preparedQuery(("SELECT id, name, address FROM %s "
-            + "ORDER BY name LIMIT $1 OFFSET $2").formatted(addressesTable))
+    return pool.preparedQuery(("SELECT id, name, address, createdbyuserid, createddate, "
+            + "updatedbyuserid, updateddate FROM %s ORDER BY name LIMIT $1 OFFSET $2")
+            .formatted(addressesTable))
         .execute(Tuple.of(limit, offset))
         .map(this::mapToTenantAddresses)
         .map(TenantAddresses::new);
@@ -158,8 +183,9 @@ public class TenantAddressesStorage {
    * Get tenant address by id.
    */
   public Future<TenantAddress> getTenantAddress(String id) {
-    return pool.preparedQuery("SELECT id, name, address FROM %s WHERE id = $1"
-            .formatted(addressesTable))
+    return pool.preparedQuery(
+            ("SELECT id, name, address, createdbyuserid, createddate, updatedbyuserid, "
+                + "updateddate FROM %s WHERE id = $1").formatted(addressesTable))
         .execute(Tuple.of(UUID.fromString(id)))
         .compose(this::mapToTenantAddress);
   }
@@ -169,9 +195,15 @@ public class TenantAddressesStorage {
    */
   public Future<TenantAddress> createTenantAddress(TenantAddress address) {
     updateTenantAddressIdIfNeeded(address, address.getId());
-    return pool.preparedQuery("INSERT INTO %s (id, name, address) VALUES ($1, $2, $3)"
-            .formatted(addressesTable))
-        .execute(Tuple.of(address.getId(), address.getName(), address.getAddress()))
+    return pool.preparedQuery(
+            ("INSERT INTO %s (id, name, address, createdbyuserid, createddate, "
+                + "updatedbyuserid, updateddate) VALUES ($1, $2, $3, $4, $5, $6, $7)")
+                .formatted(addressesTable))
+        .execute(Tuple.of(address.getId(), address.getName(), address.getAddress(),
+            address.getMetadata().createdByUserId(),
+            address.getMetadata().createdDate(),
+            address.getMetadata().updatedByUserId(),
+            address.getMetadata().updatedDate()))
         .map(address);
   }
 
@@ -179,9 +211,12 @@ public class TenantAddressesStorage {
    * Update tenant address.
    */
   public Future<Void> updateTenantAddress(String id, TenantAddress address) {
-    return pool.preparedQuery("UPDATE %s SET name = $1, address = $2 WHERE id = $3"
-            .formatted(addressesTable))
-        .execute(Tuple.of(address.getName(), address.getAddress(), UUID.fromString(id)))
+    return pool.preparedQuery(
+            ("UPDATE %s SET name = $1, address = $2, updatedbyuserid = $3, "
+                + "updateddate = $4 WHERE id = $5").formatted(addressesTable))
+        .execute(Tuple.of(address.getName(), address.getAddress(),
+            address.getMetadata().updatedByUserId(),
+            address.getMetadata().updatedDate(), UUID.fromString(id)))
         .compose(this::validateRowCount);
   }
 
@@ -199,8 +234,17 @@ public class TenantAddressesStorage {
     rowSet.forEach(row -> addresses.add(new TenantAddress(
         row.getUUID("id").toString(),
         row.getString("name"),
-        row.getString("address"))));
+        row.getString("address"),
+        mapToMetadata(row))));
     return addresses;
+  }
+
+  private Metadata mapToMetadata(Row row) {
+    var createdByUserid = row.getUUID("createdbyuserid");
+    var createdDate = row.getLocalDateTime("createddate");
+    var updatedByUserId = row.getUUID("updatedbyuserid");
+    var updatedDate = row.getLocalDateTime("updateddate");
+    return new Metadata(createdByUserid, createdDate, updatedByUserId, updatedDate);
   }
 
   private Future<TenantAddress> mapToTenantAddress(RowSet<Row> rowSet) {
@@ -221,5 +265,4 @@ public class TenantAddressesStorage {
     }
     return address;
   }
-
 }
