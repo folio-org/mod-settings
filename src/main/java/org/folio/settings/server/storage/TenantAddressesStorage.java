@@ -13,7 +13,6 @@ import io.vertx.sqlclient.Tuple;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import org.folio.okapi.common.SemVer;
 import org.folio.okapi.common.XOkapiHeaders;
@@ -58,8 +57,10 @@ public class TenantAddressesStorage {
         """.formatted(addressesTable),
         """
           ALTER TABLE IF EXISTS %s
+            ADD COLUMN IF NOT EXISTS createdbyuserid uuid,
+            ADD COLUMN IF NOT EXISTS createddate timestamp,
             ADD COLUMN IF NOT EXISTS updatedbyuserid uuid,
-            ADD COLUMN IF NOT EXISTS updateddate timestamptz;
+            ADD COLUMN IF NOT EXISTS updateddate timestamp;
         """.formatted(addressesTable)
     ));
   }
@@ -100,7 +101,8 @@ public class TenantAddressesStorage {
             var config = configs.getJsonObject(i);
             var id = config.getString("id");
             var value = config.getString("value");
-            var parsed = parseAddress(id, value);
+            var metadata = config.getJsonObject("metadata");
+            var parsed = parseAddress(id, value, metadata);
             if (parsed != null) {
               addresses.add(parsed);
             }
@@ -123,15 +125,27 @@ public class TenantAddressesStorage {
         .otherwiseEmpty();
   }
 
-  private static TenantAddress parseAddress(String id, String value) {
+  private static TenantAddress parseAddress(String id, String value, JsonObject metadata) {
     try {
       var tenantAddress = new JsonObject(value).mapTo(TenantAddress.class);
+      setMetadata(metadata, tenantAddress);
       return isBlank(tenantAddress.getName())
           ? null
           : updateTenantAddressIdIfNeeded(tenantAddress, id);
     } catch (Exception e) {
       return null;
     }
+  }
+
+  private static void setMetadata(JsonObject metadata, TenantAddress tenantAddress) {
+    var createdByUserId = UUID.fromString(metadata.getString("createdByUserId"));
+    var createdDate =
+        OffsetDateTime.parse(metadata.getString("createdDate")).toLocalDateTime();
+    var updatedByUserId = UUID.fromString(metadata.getString("updatedByUserId"));
+    var updatedDate =
+        OffsetDateTime.parse(metadata.getString("updatedDate")).toLocalDateTime();
+    tenantAddress.setMetadata(
+        new Metadata(createdByUserId, createdDate, updatedByUserId, updatedDate));
   }
 
   private static String uri(TenantInitConf tenantInitConf, String path, String toEncode) {
@@ -145,9 +159,14 @@ public class TenantAddressesStorage {
   }
 
   private Future<Void> insertMigratedAddress(TenantAddress address) {
-    return pool.preparedQuery(("INSERT INTO %s (id, name, address) VALUES ($1, $2, $3) "
+    return pool.preparedQuery(("INSERT INTO %s (id, name, address, createdbyuserid, createddate, "
+            + "updatedbyuserid, updateddate) VALUES ($1, $2, $3, $4, $5, $6, $7) "
             + "ON CONFLICT (name) DO NOTHING").formatted(addressesTable))
-        .execute(Tuple.of(address.getId(), address.getName(), address.getAddress()))
+        .execute(Tuple.of(address.getId(), address.getName(), address.getAddress(),
+            address.getMetadata().createdByUserId(),
+            address.getMetadata().createdDate(),
+            address.getMetadata().updatedByUserId(),
+            address.getMetadata().updatedDate()))
         .mapEmpty();
   }
 
@@ -155,8 +174,9 @@ public class TenantAddressesStorage {
    * Get tenant addresses.
    */
   public Future<TenantAddresses> getTenantAddresses(int offset, int limit) {
-    return pool.preparedQuery(("SELECT id, name, address, updatedbyuserid, updateddate FROM %s "
-            + "ORDER BY name LIMIT $1 OFFSET $2").formatted(addressesTable))
+    return pool.preparedQuery(("SELECT id, name, address, createdbyuserid, createddate, "
+            + "updatedbyuserid, updateddate FROM %s ORDER BY name LIMIT $1 OFFSET $2")
+            .formatted(addressesTable))
         .execute(Tuple.of(limit, offset))
         .map(this::mapToTenantAddresses)
         .map(TenantAddresses::new);
@@ -167,8 +187,8 @@ public class TenantAddressesStorage {
    */
   public Future<TenantAddress> getTenantAddress(String id) {
     return pool.preparedQuery(
-            ("SELECT id, name, address, updatedbyuserid, updateddate FROM %s "
-                + "WHERE id = $1").formatted(addressesTable))
+            ("SELECT id, name, address, createdbyuserid, createddate, updatedbyuserid, "
+                + "updateddate FROM %s WHERE id = $1").formatted(addressesTable))
         .execute(Tuple.of(UUID.fromString(id)))
         .compose(this::mapToTenantAddress);
   }
@@ -179,9 +199,12 @@ public class TenantAddressesStorage {
   public Future<TenantAddress> createTenantAddress(TenantAddress address) {
     updateTenantAddressIdIfNeeded(address, address.getId());
     return pool.preparedQuery(
-            ("INSERT INTO %s (id, name, address, updatedbyuserid, updateddate) "
-                + "VALUES ($1, $2, $3, $4, $5)").formatted(addressesTable))
+            ("INSERT INTO %s (id, name, address, createdbyuserid, createddate, "
+                + "updatedbyuserid, updateddate) VALUES ($1, $2, $3, $4, $5, $6, $7)")
+                .formatted(addressesTable))
         .execute(Tuple.of(address.getId(), address.getName(), address.getAddress(),
+            address.getMetadata().createdByUserId(),
+            address.getMetadata().createdDate(),
             address.getMetadata().updatedByUserId(),
             address.getMetadata().updatedDate()))
         .map(address);
@@ -211,22 +234,20 @@ public class TenantAddressesStorage {
 
   private List<TenantAddress> mapToTenantAddresses(RowSet<Row> rowSet) {
     var addresses = new ArrayList<TenantAddress>();
-    rowSet.forEach(row -> {
-      var updatedByUserId = row.getUUID("updatedbyuserid");
-      var updatedDate = row.getOffsetDateTime("updateddate");
-      addresses.add(new TenantAddress(
-          row.getUUID("id").toString(),
-          row.getString("name"),
-          row.getString("address"),
-          mapMetadata(updatedByUserId, updatedDate)));
-    });
+    rowSet.forEach(row -> addresses.add(new TenantAddress(
+        row.getUUID("id").toString(),
+        row.getString("name"),
+        row.getString("address"),
+        mapToMetadata(row))));
     return addresses;
   }
 
-  private Metadata mapMetadata(UUID updatedByUserId, OffsetDateTime updatedDate) {
-    return Objects.nonNull(updatedByUserId) && Objects.nonNull(updatedDate)
-        ? new Metadata(updatedByUserId, updatedDate)
-        : null;
+  private Metadata mapToMetadata(Row row) {
+    var createdByUserid = row.getUUID("createdbyuserid");
+    var createdDate = row.getLocalDateTime("createddate");
+    var updatedByUserId = row.getUUID("updatedbyuserid");
+    var updatedDate = row.getLocalDateTime("updateddate");
+    return new Metadata(createdByUserid, createdDate, updatedByUserId, updatedDate);
   }
 
   private Future<TenantAddress> mapToTenantAddress(RowSet<Row> rowSet) {

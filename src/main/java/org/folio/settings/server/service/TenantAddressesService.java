@@ -80,7 +80,9 @@ public final class TenantAddressesService {
       response400(ctx, "name or address missing");
       return Future.succeededFuture();
     }
-    tenantAddress.setMetadata(new Metadata(UserUtil.getUserId(ctx), getTruncatedOffsetDateTime()));
+    var userId = UserUtil.getUserId(ctx);
+    var changeDate = getTruncatedOffsetDateTime();
+    tenantAddress.setMetadata(new Metadata(userId, changeDate, userId, changeDate));
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .createTenantAddress(tenantAddress)
         .onSuccess(created -> {
@@ -105,7 +107,9 @@ public final class TenantAddressesService {
       response400(ctx, "name or address missing");
       return Future.succeededFuture();
     }
-    tenantAddress.setMetadata(new Metadata(UserUtil.getUserId(ctx), getTruncatedOffsetDateTime()));
+    var userId = UserUtil.getUserId(ctx);
+    var changeDate = getTruncatedOffsetDateTime();
+    tenantAddress.setMetadata(new Metadata(null, null, userId, changeDate));
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
         .updateTenantAddress(id, tenantAddress)
         .onSuccess(x -> HttpResponse.responseText(ctx, HTTP_NO_CONTENT.toInt()).end())
