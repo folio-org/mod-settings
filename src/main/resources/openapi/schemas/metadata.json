@@ -23,9 +23,6 @@
   },
   "additionalProperties": false,
   "required": [
-    "createdByUserId",
-    "createdDate",
-    "updatedByUserId",
-    "updatedDate"
+    "createdDate"
   ]
 }
