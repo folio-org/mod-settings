@@ -2,6 +2,15 @@
   "description": "Metadata containing user and date information",
   "type": "object",
   "properties": {
+    "createdByUserId": {
+      "description": "Created by user id",
+      "type": "string",
+      "format": "uuid"
+    },
+    "createdDate": {
+      "description": "Creation date",
+      "type": "string"
+    },
     "updatedByUserId": {
       "description": "Updated by user id",
       "type": "string",
@@ -14,6 +23,8 @@
   },
   "additionalProperties": false,
   "required": [
+    "createdByUserId",
+    "createdDate",
     "updatedByUserId",
     "updatedDate"
   ]
