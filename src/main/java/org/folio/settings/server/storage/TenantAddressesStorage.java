@@ -53,14 +53,11 @@ public class TenantAddressesStorage {
           CREATE TABLE IF NOT EXISTS %s
             (id uuid PRIMARY KEY,
              name text UNIQUE NOT NULL,
-             address text NOT NULL)
-        """.formatted(addressesTable),
-        """
-          ALTER TABLE IF EXISTS %s
-            ADD COLUMN IF NOT EXISTS createdbyuserid uuid,
-            ADD COLUMN IF NOT EXISTS createddate timestamp,
-            ADD COLUMN IF NOT EXISTS updatedbyuserid uuid,
-            ADD COLUMN IF NOT EXISTS updateddate timestamp;
+             address text NOT NULL,
+             createdbyuserid uuid,
+             createddate timestamp,
+             updatedbyuserid uuid,
+             updateddate timestamp)
         """.formatted(addressesTable)
     ));
   }
