@@ -136,11 +136,9 @@ public class TenantAddressesStorage {
 
   private static void setMetadata(JsonObject metadata, TenantAddress tenantAddress) {
     var createdByUserId = UUID.fromString(metadata.getString("createdByUserId"));
-    var createdDate =
-        OffsetDateTime.parse(metadata.getString("createdDate")).toLocalDateTime();
+    var createdDate = OffsetDateTime.parse(metadata.getString("createdDate"));
     var updatedByUserId = UUID.fromString(metadata.getString("updatedByUserId"));
-    var updatedDate =
-        OffsetDateTime.parse(metadata.getString("updatedDate")).toLocalDateTime();
+    var updatedDate = OffsetDateTime.parse(metadata.getString("updatedDate"));
     tenantAddress.setMetadata(
         new Metadata(createdByUserId, createdDate, updatedByUserId, updatedDate));
   }
@@ -241,9 +239,9 @@ public class TenantAddressesStorage {
 
   private Metadata mapToMetadata(Row row) {
     var createdByUserid = row.getUUID("createdbyuserid");
-    var createdDate = row.getLocalDateTime("createddate");
+    var createdDate = row.getLocalDateTime("createddate").atOffset(java.time.ZoneOffset.UTC);
     var updatedByUserId = row.getUUID("updatedbyuserid");
-    var updatedDate = row.getLocalDateTime("updateddate");
+    var updatedDate = row.getLocalDateTime("updateddate").atOffset(java.time.ZoneOffset.UTC);
     return new Metadata(createdByUserid, createdDate, updatedByUserId, updatedDate);
   }
 
