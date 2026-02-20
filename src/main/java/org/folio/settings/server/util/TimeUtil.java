@@ -1,11 +1,13 @@
 package org.folio.settings.server.util;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-import java.time.LocalDateTime;
+import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoUnit;
 
 public class TimeUtil {
@@ -14,31 +16,35 @@ public class TimeUtil {
   }
 
   /**
-   * Create a JavaTimeModule configured to serialize LocalDateTime
-   * with UTC timezone offset (+00:00) appended.
-   * This ensures consistency with other timestamp formats in the application.
+   * Create a JavaTimeModule configured to serialize date/time types
+   * in ISO-8601 format with +00:00 instead of Z for UTC timezone.
    *
    * @return configured JavaTimeModule
    */
   public static JavaTimeModule createJavaTimeModule() {
     var module = new JavaTimeModule();
-    var formatter = new DateTimeFormatterBuilder()
-        .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-        .appendLiteral("+00:00")
-        .toFormatter();
-    module.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(formatter));
+    module.addSerializer(OffsetDateTime.class, new JsonSerializer<>() {
+      @Override
+      public void serialize(OffsetDateTime value, JsonGenerator gen, SerializerProvider serializers)
+          throws IOException {
+        // Format manually to ensure +00:00 instead of Z
+        var formatted = value.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        var offset = value.getOffset().equals(ZoneOffset.UTC) ? "+00:00" : value.getOffset().getId();
+        gen.writeString(formatted + offset);
+      }
+    });
     return module;
   }
 
   /**
-   * Get the current LocalDateTime in UTC truncated to milliseconds precision.
+   * Get the current OffsetDateTime in UTC truncated to milliseconds precision.
    * This removes nanoseconds beyond milliseconds to ensure consistent
    * timestamp formatting across the application.
    *
-   * @return current LocalDateTime in UTC truncated to milliseconds
+   * @return current OffsetDateTime in UTC truncated to milliseconds
    */
-  public static LocalDateTime getTruncatedOffsetDateTime() {
-    return LocalDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MILLIS);
+  public static OffsetDateTime getTruncatedOffsetDateTime() {
+    return OffsetDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MILLIS);
   }
 }
 

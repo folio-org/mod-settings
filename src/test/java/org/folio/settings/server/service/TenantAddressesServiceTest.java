@@ -122,6 +122,46 @@ class TenantAddressesServiceTest implements TestContainersSupport {
   }
 
   @Test
+  void createTenantAddressIgnoresIncomingMetadata() {
+    var name = uniqueName("address");
+    var differentUserId = "99999999-9999-9999-9999-999999999999";
+    var oldDate = "2020-01-01T10:00:00.000000+00:00";
+
+    var requestBody = JsonObject.of(
+        "name", name,
+        "address", "address1-full",
+        "metadata", JsonObject.of(
+            "createdByUserId", differentUserId,
+            "createdDate", oldDate,
+            "updatedByUserId", differentUserId,
+            "updatedDate", oldDate
+        )
+    ).encode();
+
+    var response = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .header(XOkapiHeaders.USER_ID, TEST_USER_ID)
+        .header("Content-Type", "application/json")
+        .body(requestBody)
+        .post("/tenant-addresses")
+        .then()
+        .statusCode(201)
+        .body("name", is(name))
+        .body("address", is("address1-full"))
+        .body("metadata", notNullValue())
+        .body("metadata.createdByUserId", is(TEST_USER_ID))
+        .body("metadata.createdDate", matchesPattern(ISO_DATETIME_PATTERN))
+        .body("metadata.updatedByUserId", is(TEST_USER_ID))
+        .body("metadata.updatedDate", matchesPattern(ISO_DATETIME_PATTERN))
+        .extract();
+
+    // Verify the metadata was regenerated and doesn't match the incoming metadata
+    assertThat(response.path("metadata.createdByUserId"), is(TEST_USER_ID));
+    assertThat(response.path("metadata.createdDate").toString(), is(notNullValue()));
+    assertThat(response.path("metadata.createdDate").toString().contains("2020"), is(false));
+  }
+
+  @Test
   void createMissingAddressFields() {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT)
@@ -231,6 +271,64 @@ class TenantAddressesServiceTest implements TestContainersSupport {
         .body("metadata.createdDate", matchesPattern(ISO_DATETIME_PATTERN))
         .body("metadata.updatedByUserId", is(TEST_USER_ID))
         .body("metadata.updatedDate", matchesPattern(ISO_DATETIME_PATTERN));
+  }
+
+  @Test
+  void updateTenantAddressIgnoresIncomingMetadata() {
+    var createdId = createAddress(uniqueName("address"), "address1-full");
+
+    // Get the original created date
+    var originalCreatedDate = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .get("/tenant-addresses/" + createdId)
+        .then()
+        .statusCode(200)
+        .extract().path("metadata.createdDate").toString();
+
+    var newName = uniqueName("address");
+    var newAddress = "address1-full-updated";
+    var differentUserId = "99999999-9999-9999-9999-999999999999";
+    var oldDate = "2020-01-01T10:00:00.000000+00:00";
+
+    var requestBody = JsonObject.of(
+        "name", newName,
+        "address", newAddress,
+        "metadata", JsonObject.of(
+            "createdByUserId", differentUserId,
+            "createdDate", oldDate,
+            "updatedByUserId", differentUserId,
+            "updatedDate", oldDate
+        )
+    ).encode();
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .header(XOkapiHeaders.USER_ID, TEST_USER_ID)
+        .header("Content-Type", "application/json")
+        .body(requestBody)
+        .put("/tenant-addresses/" + createdId)
+        .then()
+        .statusCode(204);
+
+    var response = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .get("/tenant-addresses/" + createdId)
+        .then()
+        .statusCode(200)
+        .body("name", is(newName))
+        .body("address", is(newAddress))
+        .body("metadata", notNullValue())
+        .body("metadata.updatedByUserId", is(TEST_USER_ID))
+        .body("metadata.updatedDate", matchesPattern(ISO_DATETIME_PATTERN))
+        .extract();
+
+    // Verify the metadata was regenerated and doesn't match the incoming metadata
+    assertThat(response.path("metadata.updatedByUserId"), is(TEST_USER_ID));
+    assertThat(response.path("metadata.updatedDate").toString(), is(notNullValue()));
+    assertThat(response.path("metadata.updatedDate").toString().contains("2020"), is(false));
+
+    // Verify createdDate wasn't changed (should be null in update metadata but preserved in DB)
+    assertThat(response.path("metadata.createdDate").toString(), is(originalCreatedDate));
   }
 
   @Test

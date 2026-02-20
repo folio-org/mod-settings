@@ -22,6 +22,8 @@ import org.folio.settings.server.util.TimeUtil;
 import org.folio.settings.server.util.UserUtil;
 import org.folio.tlib.util.TenantUtil;
 
+import java.util.Objects;
+
 public final class TenantAddressesService {
 
   private static final int DEFAULT_LIMIT = 50;
@@ -75,9 +77,8 @@ public final class TenantAddressesService {
    * Create tenant address.
    */
   public static Future<Void> createTenantAddress(RoutingContext ctx) {
-    var tenantAddress = ctx.body().asJsonObject().mapTo(TenantAddress.class);
-    if (addressInvalid(tenantAddress)) {
-      response400(ctx, "name or address missing");
+    var tenantAddress = deserializeTenantAddress(ctx);
+    if (Objects.isNull(tenantAddress)) {
       return Future.succeededFuture();
     }
     var userId = UserUtil.getUserId(ctx);
@@ -102,9 +103,8 @@ public final class TenantAddressesService {
    */
   public static Future<Void> updateTenantAddress(RoutingContext ctx) {
     var id = ctx.pathParam("id");
-    var tenantAddress = ctx.body().asJsonObject().mapTo(TenantAddress.class);
-    if (addressInvalid(tenantAddress)) {
-      response400(ctx, "name or address missing");
+    var tenantAddress = deserializeTenantAddress(ctx);
+    if (Objects.isNull(tenantAddress)) {
       return Future.succeededFuture();
     }
     var userId = UserUtil.getUserId(ctx);
@@ -136,6 +136,21 @@ public final class TenantAddressesService {
     return address == null
         || isBlank(address.getName())
         || isBlank(address.getAddress());
+  }
+
+  private static TenantAddress deserializeTenantAddress(RoutingContext ctx) {
+    TenantAddress tenantAddress;
+    try {
+      tenantAddress = objectMapper.readValue(ctx.body().asString(), TenantAddress.class);
+    } catch (JsonProcessingException e) {
+      response400(ctx, "invalid request body: " + e.getMessage());
+      return null;
+    }
+    if (addressInvalid(tenantAddress)) {
+      response400(ctx, "name or address missing");
+      return null;
+    }
+    return tenantAddress;
   }
 
   private static Future<Void> handleException(RoutingContext ctx, Throwable cause) {
