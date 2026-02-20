@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import io.vertx.core.Future;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.pgclient.PgException;
+import java.util.Objects;
 import org.folio.HttpStatus;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.settings.server.data.Metadata;
@@ -22,7 +23,6 @@ import org.folio.settings.server.util.TimeUtil;
 import org.folio.settings.server.util.UserUtil;
 import org.folio.tlib.util.TenantUtil;
 
-import java.util.Objects;
 
 public final class TenantAddressesService {
 

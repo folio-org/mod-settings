@@ -29,7 +29,8 @@ public class TimeUtil {
           throws IOException {
         // Format manually to ensure +00:00 instead of Z
         var formatted = value.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        var offset = value.getOffset().equals(ZoneOffset.UTC) ? "+00:00" : value.getOffset().getId();
+        var offset = value.getOffset().equals(ZoneOffset.UTC)
+            ? "+00:00" : value.getOffset().getId();
         gen.writeString(formatted + offset);
       }
     });
