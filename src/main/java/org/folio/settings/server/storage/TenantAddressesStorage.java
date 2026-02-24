@@ -14,6 +14,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.folio.okapi.common.SemVer;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.settings.server.data.Metadata;
@@ -28,6 +29,8 @@ public class TenantAddressesStorage {
 
   private static final SemVer SEM_VER_1_3_0 = new SemVer("1.3.0");
   private static final String TENANT_ADDRESSES = "tenant_addresses";
+  private static final Pattern NAME_QUERY_PATTERN =
+      Pattern.compile("\\(?name==\\s*([^ )]+)\\s*\\)?");
 
   private final TenantPgPool pool;
 
@@ -170,8 +173,8 @@ public class TenantAddressesStorage {
    * Get tenant addresses.
    */
   public Future<TenantAddresses> getTenantAddresses(String query, int offset, int limit) {
-    var sqlQuery = (String) null;
-    var tuples = (Tuple) null;
+    String sqlQuery;
+    Tuple tuples;
     if (StringUtil.isBlank(query)) {
       sqlQuery = "SELECT id, name, address, createdbyuserid, createddate, "
           + "updatedbyuserid, updateddate FROM %s ORDER BY name LIMIT $1 OFFSET $2";
@@ -180,7 +183,7 @@ public class TenantAddressesStorage {
       sqlQuery = "SELECT id, name, address, createdbyuserid, createddate, "
           + "updatedbyuserid, updateddate FROM %s WHERE name = $1 "
           + "ORDER BY name LIMIT $2 OFFSET $3";
-      var name = query.replaceAll("\\(?name==\\s*([^ )]+)\\s*\\)?", "$1");
+      var name = NAME_QUERY_PATTERN.matcher(query).replaceAll("$1");
       tuples = Tuple.of(name, limit, offset);
     }
     return pool.preparedQuery(sqlQuery.formatted(addressesTable))
