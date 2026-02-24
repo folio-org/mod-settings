@@ -14,11 +14,13 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.folio.okapi.common.SemVer;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.settings.server.data.Metadata;
 import org.folio.settings.server.data.TenantAddress;
 import org.folio.settings.server.data.TenantAddresses;
+import org.folio.settings.server.util.StringUtil;
 import org.folio.tlib.TenantInitConf;
 import org.folio.tlib.postgres.TenantPgPool;
 import org.folio.util.PercentCodec;
@@ -26,6 +28,9 @@ import org.folio.util.PercentCodec;
 public class TenantAddressesStorage {
 
   private static final SemVer SEM_VER_1_3_0 = new SemVer("1.3.0");
+  private static final String TENANT_ADDRESSES = "tenant_addresses";
+  private static final Pattern NAME_QUERY_PATTERN =
+      Pattern.compile("\\(?name==\\s*([^ )]+)\\s*\\)?");
 
   private final TenantPgPool pool;
 
@@ -36,7 +41,7 @@ public class TenantAddressesStorage {
    */
   public TenantAddressesStorage(Vertx vertx, String tenant) {
     this.pool = TenantPgPool.pool(vertx, tenant);
-    this.addressesTable = pool.getSchema() + ".tenant_addresses";
+    this.addressesTable = "%s.%s".formatted(pool.getSchema(), TENANT_ADDRESSES);
   }
 
   /**
@@ -49,17 +54,16 @@ public class TenantAddressesStorage {
 
   private Future<Void> initTable() {
     return pool.execute(List.of(
-        """
-          CREATE TABLE IF NOT EXISTS %s
-            (id uuid PRIMARY KEY,
-             name text UNIQUE NOT NULL,
-             address text NOT NULL,
-             createdbyuserid uuid,
-             createddate timestamp,
-             updatedbyuserid uuid,
-             updateddate timestamp)
-        """.formatted(addressesTable)
-    ));
+            """
+              CREATE TABLE IF NOT EXISTS %s
+                (id uuid PRIMARY KEY,
+                 name text UNIQUE NOT NULL,
+                 address text,
+                 createdbyuserid uuid,
+                 createddate timestamp,
+                 updatedbyuserid uuid,
+                 updateddate timestamp)
+            """.formatted(addressesTable)));
   }
 
   private Future<Void> migrateData(TenantInitConf tenantInitConf, String oldVersion) {
@@ -168,11 +172,22 @@ public class TenantAddressesStorage {
   /**
    * Get tenant addresses.
    */
-  public Future<TenantAddresses> getTenantAddresses(int offset, int limit) {
-    return pool.preparedQuery(("SELECT id, name, address, createdbyuserid, createddate, "
-            + "updatedbyuserid, updateddate FROM %s ORDER BY name LIMIT $1 OFFSET $2")
-            .formatted(addressesTable))
-        .execute(Tuple.of(limit, offset))
+  public Future<TenantAddresses> getTenantAddresses(String query, int offset, int limit) {
+    String sqlQuery;
+    Tuple tuples;
+    if (StringUtil.isBlank(query)) {
+      sqlQuery = "SELECT id, name, address, createdbyuserid, createddate, "
+          + "updatedbyuserid, updateddate FROM %s ORDER BY name LIMIT $1 OFFSET $2";
+      tuples = Tuple.of(limit, offset);
+    } else {
+      sqlQuery = "SELECT id, name, address, createdbyuserid, createddate, "
+          + "updatedbyuserid, updateddate FROM %s WHERE name = $1 "
+          + "ORDER BY name LIMIT $2 OFFSET $3";
+      var name = NAME_QUERY_PATTERN.matcher(query).replaceAll("$1");
+      tuples = Tuple.of(name, limit, offset);
+    }
+    return pool.preparedQuery(sqlQuery.formatted(addressesTable))
+        .execute(tuples)
         .map(this::mapToTenantAddresses)
         .map(TenantAddresses::new);
   }

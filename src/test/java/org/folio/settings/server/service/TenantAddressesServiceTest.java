@@ -21,6 +21,9 @@ import org.folio.settings.server.main.MainVerticle;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.UUID;
@@ -101,24 +104,32 @@ class TenantAddressesServiceTest implements TestContainersSupport {
   }
 
 
-  @Test
-  void createTenantAddress() {
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = "address1-full")
+  void createTenantAddress(String address) {
     var name = uniqueName("address");
-    RestAssured.given()
+    var body = new JsonObject().put("name", name);
+    if (address != null) {
+      body.put("address", address);
+    }
+    var spec = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT)
         .header(XOkapiHeaders.USER_ID, TEST_USER_ID)
         .header("Content-Type", "application/json")
-        .body(JsonObject.of("name", name, "address", "address1-full").encode())
+        .body(body.encode())
         .post("/tenant-addresses")
         .then()
         .statusCode(201)
         .body("name", is(name))
-        .body("address", is("address1-full"))
         .body("metadata", notNullValue())
         .body("metadata.createdByUserId", is(TEST_USER_ID))
         .body("metadata.createdDate", matchesPattern(ISO_DATETIME_PATTERN))
         .body("metadata.updatedByUserId", is(TEST_USER_ID))
         .body("metadata.updatedDate", matchesPattern(ISO_DATETIME_PATTERN));
+    if (address != null) {
+      spec.body("address", is(address));
+    }
   }
 
   @Test
@@ -225,6 +236,32 @@ class TenantAddressesServiceTest implements TestContainersSupport {
         .body("addresses.name", hasItems(name1, name2));
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"name==%s", "(name==%s)"})
+  void getTenantAddressesByNameQuery(String queryTemplate) {
+    var name = uniqueName("address");
+    createAddress(name, "address-query-full");
+
+    var query = queryTemplate.formatted(name);
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .get("/tenant-addresses?query=" + query)
+        .then()
+        .statusCode(200)
+        .body("addresses.size()", is(1))
+        .body("addresses[0].name", is(name));
+  }
+
+  @Test
+  void getTenantAddressesByNameQueryNoMatch() {
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .get("/tenant-addresses?query=name==this-name-does-not-exist-" + UUID.randomUUID())
+        .then()
+        .statusCode(200)
+        .body("addresses.size()", is(0));
+  }
+
   @Test
   void getTenantAddressById() {
     var name = uniqueName("address");
@@ -244,33 +281,40 @@ class TenantAddressesServiceTest implements TestContainersSupport {
         .body("metadata.updatedDate", matchesPattern(ISO_DATETIME_PATTERN));
   }
 
-  @Test
-  void updateTenantAddressById() {
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = "address1-full-updated")
+  void updateTenantAddressById(String newAddress) {
     var createdId = createAddress(uniqueName("address"), "address1-full");
     var newName = uniqueName("address");
-    var newAddress = "address1-full-updated";
+    var body = new JsonObject().put("name", newName);
+    if (newAddress != null) {
+      body.put("address", newAddress);
+    }
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT)
         .header(XOkapiHeaders.USER_ID, TEST_USER_ID)
         .header("Content-Type", "application/json")
-        .body(JsonObject.of("name", newName, "address", newAddress).encode())
+        .body(body.encode())
         .put("/tenant-addresses/" + createdId)
         .then()
         .statusCode(204);
 
-    RestAssured.given()
+    var spec = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT)
         .get("/tenant-addresses/" + createdId)
         .then()
         .statusCode(200)
         .body("name", is(newName))
-        .body("address", is(newAddress))
         .body("metadata", notNullValue())
         .body("metadata.createdByUserId", is(TEST_USER_ID))
         .body("metadata.createdDate", matchesPattern(ISO_DATETIME_PATTERN))
         .body("metadata.updatedByUserId", is(TEST_USER_ID))
         .body("metadata.updatedDate", matchesPattern(ISO_DATETIME_PATTERN));
+    if (newAddress != null) {
+      spec.body("address", is(newAddress));
+    }
   }
 
   @Test
