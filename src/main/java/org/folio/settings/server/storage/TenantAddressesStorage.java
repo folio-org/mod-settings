@@ -19,6 +19,7 @@ import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.settings.server.data.Metadata;
 import org.folio.settings.server.data.TenantAddress;
 import org.folio.settings.server.data.TenantAddresses;
+import org.folio.settings.server.util.StringUtil;
 import org.folio.tlib.TenantInitConf;
 import org.folio.tlib.postgres.TenantPgPool;
 import org.folio.util.PercentCodec;
@@ -49,17 +50,19 @@ public class TenantAddressesStorage {
 
   private Future<Void> initTable() {
     return pool.execute(List.of(
-        """
-          CREATE TABLE IF NOT EXISTS %s
-            (id uuid PRIMARY KEY,
-             name text UNIQUE NOT NULL,
-             address text,
-             createdbyuserid uuid,
-             createddate timestamp,
-             updatedbyuserid uuid,
-             updateddate timestamp)
-        """.formatted(addressesTable)
-    ));
+            """
+              CREATE TABLE IF NOT EXISTS %s
+                (id uuid PRIMARY KEY,
+                 name text UNIQUE NOT NULL,
+                 address text,
+                 createdbyuserid uuid,
+                 createddate timestamp,
+                 updatedbyuserid uuid,
+                 updateddate timestamp)
+            """.formatted(addressesTable),
+            """
+              CREATE INDEX IF NOT EXISTS %s_name_idx on %s (name)
+            """.formatted("tenant_addresses", addressesTable)));
   }
 
   private Future<Void> migrateData(TenantInitConf tenantInitConf, String oldVersion) {
@@ -168,11 +171,21 @@ public class TenantAddressesStorage {
   /**
    * Get tenant addresses.
    */
-  public Future<TenantAddresses> getTenantAddresses(int offset, int limit) {
+  public Future<TenantAddresses> getTenantAddresses(String query, int offset, int limit) {
+    if (StringUtil.isBlank(query)) {
+      return pool.preparedQuery(("SELECT id, name, address, createdbyuserid, createddate, "
+              + "updatedbyuserid, updateddate FROM %s ORDER BY name LIMIT $1 OFFSET $2")
+              .formatted(addressesTable))
+          .execute(Tuple.of(limit, offset))
+          .map(this::mapToTenantAddresses)
+          .map(TenantAddresses::new);
+    }
+    var name = query.replaceAll("\\(?name==\\s*([^ )]+)\\s*\\)?", "$1");
     return pool.preparedQuery(("SELECT id, name, address, createdbyuserid, createddate, "
-            + "updatedbyuserid, updateddate FROM %s ORDER BY name LIMIT $1 OFFSET $2")
+            + "updatedbyuserid, updateddate FROM %s WHERE name = $1 "
+            + "ORDER BY name LIMIT $2 OFFSET $3")
             .formatted(addressesTable))
-        .execute(Tuple.of(limit, offset))
+        .execute(Tuple.of(name, limit, offset))
         .map(this::mapToTenantAddresses)
         .map(TenantAddresses::new);
   }

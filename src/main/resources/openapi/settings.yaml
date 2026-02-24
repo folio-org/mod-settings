@@ -68,6 +68,7 @@ paths:
   /tenant-addresses:
     parameters:
       - $ref: headers/okapi-tenant.yaml
+      - $ref: parameters/query.yaml
       - $ref: parameters/limit.yaml
       - $ref: parameters/offset.yaml
     get:

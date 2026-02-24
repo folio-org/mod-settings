@@ -23,7 +23,6 @@ import org.folio.settings.server.util.TimeUtil;
 import org.folio.settings.server.util.UserUtil;
 import org.folio.tlib.util.TenantUtil;
 
-
 public final class TenantAddressesService {
 
   private static final int DEFAULT_LIMIT = 50;
@@ -42,8 +41,10 @@ public final class TenantAddressesService {
   public static Future<Void> getTenantAddresses(RoutingContext ctx) {
     var limit = getIntQuery(ctx, "limit", DEFAULT_LIMIT);
     var offset = getIntQuery(ctx, "offset", DEFAULT_OFFSET);
+    var tmp = ctx.queryParam("query");
+    var query = tmp.isEmpty() ? null : tmp.getFirst();
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
-        .getTenantAddresses(offset, limit)
+        .getTenantAddresses(query, offset, limit)
         .onSuccess(tenantAddresses -> {
           try {
             HttpResponse.responseJson(ctx, HTTP_OK.toInt())

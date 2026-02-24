@@ -236,6 +236,32 @@ class TenantAddressesServiceTest implements TestContainersSupport {
         .body("addresses.name", hasItems(name1, name2));
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"name==%s", "(name==%s)"})
+  void getTenantAddressesByNameQuery(String queryTemplate) {
+    var name = uniqueName("address");
+    createAddress(name, "address-query-full");
+
+    var query = queryTemplate.formatted(name);
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .get("/tenant-addresses?query=" + query)
+        .then()
+        .statusCode(200)
+        .body("addresses.size()", is(1))
+        .body("addresses[0].name", is(name));
+  }
+
+  @Test
+  void getTenantAddressesByNameQueryNoMatch() {
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .get("/tenant-addresses?query=name==this-name-does-not-exist-" + UUID.randomUUID())
+        .then()
+        .statusCode(200)
+        .body("addresses.size()", is(0));
+  }
+
   @Test
   void getTenantAddressById() {
     var name = uniqueName("address");
