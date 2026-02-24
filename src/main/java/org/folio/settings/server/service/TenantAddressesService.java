@@ -133,9 +133,7 @@ public final class TenantAddressesService {
   }
 
   private static boolean addressInvalid(TenantAddress address) {
-    return address == null
-        || isBlank(address.getName())
-        || isBlank(address.getAddress());
+    return address == null || isBlank(address.getName());
   }
 
   private static TenantAddress deserializeTenantAddress(RoutingContext ctx) {
@@ -147,7 +145,7 @@ public final class TenantAddressesService {
       return null;
     }
     if (addressInvalid(tenantAddress)) {
-      response400(ctx, "name or address missing");
+      response400(ctx, "name missing");
       return null;
     }
     return tenantAddress;

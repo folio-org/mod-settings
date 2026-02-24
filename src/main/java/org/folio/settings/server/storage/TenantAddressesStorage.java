@@ -53,7 +53,7 @@ public class TenantAddressesStorage {
           CREATE TABLE IF NOT EXISTS %s
             (id uuid PRIMARY KEY,
              name text UNIQUE NOT NULL,
-             address text NOT NULL,
+             address text,
              createdbyuserid uuid,
              createddate timestamp,
              updatedbyuserid uuid,
