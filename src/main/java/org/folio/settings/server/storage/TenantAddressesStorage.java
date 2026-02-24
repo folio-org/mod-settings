@@ -27,6 +27,7 @@ import org.folio.util.PercentCodec;
 public class TenantAddressesStorage {
 
   private static final SemVer SEM_VER_1_3_0 = new SemVer("1.3.0");
+  private static final String TENANT_ADDRESSES = "tenant_addresses";
 
   private final TenantPgPool pool;
 
@@ -37,7 +38,7 @@ public class TenantAddressesStorage {
    */
   public TenantAddressesStorage(Vertx vertx, String tenant) {
     this.pool = TenantPgPool.pool(vertx, tenant);
-    this.addressesTable = pool.getSchema() + ".tenant_addresses";
+    this.addressesTable = "%s.%s".formatted(pool.getSchema(), TENANT_ADDRESSES);
   }
 
   /**
@@ -59,10 +60,7 @@ public class TenantAddressesStorage {
                  createddate timestamp,
                  updatedbyuserid uuid,
                  updateddate timestamp)
-            """.formatted(addressesTable),
-            """
-              CREATE INDEX IF NOT EXISTS %s_name_idx on %s (name)
-            """.formatted("tenant_addresses", addressesTable)));
+            """.formatted(addressesTable)));
   }
 
   private Future<Void> migrateData(TenantInitConf tenantInitConf, String oldVersion) {
