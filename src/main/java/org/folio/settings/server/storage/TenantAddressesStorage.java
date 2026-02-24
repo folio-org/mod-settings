@@ -170,20 +170,21 @@ public class TenantAddressesStorage {
    * Get tenant addresses.
    */
   public Future<TenantAddresses> getTenantAddresses(String query, int offset, int limit) {
+    var sqlQuery = (String) null;
+    var tuples = (Tuple) null;
     if (StringUtil.isBlank(query)) {
-      return pool.preparedQuery(("SELECT id, name, address, createdbyuserid, createddate, "
-              + "updatedbyuserid, updateddate FROM %s ORDER BY name LIMIT $1 OFFSET $2")
-              .formatted(addressesTable))
-          .execute(Tuple.of(limit, offset))
-          .map(this::mapToTenantAddresses)
-          .map(TenantAddresses::new);
+      sqlQuery = "SELECT id, name, address, createdbyuserid, createddate, "
+          + "updatedbyuserid, updateddate FROM %s ORDER BY name LIMIT $1 OFFSET $2";
+      tuples = Tuple.of(limit, offset);
+    } else {
+      sqlQuery = "SELECT id, name, address, createdbyuserid, createddate, "
+          + "updatedbyuserid, updateddate FROM %s WHERE name = $1 "
+          + "ORDER BY name LIMIT $2 OFFSET $3";
+      var name = query.replaceAll("\\(?name==\\s*([^ )]+)\\s*\\)?", "$1");
+      tuples = Tuple.of(name, limit, offset);
     }
-    var name = query.replaceAll("\\(?name==\\s*([^ )]+)\\s*\\)?", "$1");
-    return pool.preparedQuery(("SELECT id, name, address, createdbyuserid, createddate, "
-            + "updatedbyuserid, updateddate FROM %s WHERE name = $1 "
-            + "ORDER BY name LIMIT $2 OFFSET $3")
-            .formatted(addressesTable))
-        .execute(Tuple.of(name, limit, offset))
+    return pool.preparedQuery(sqlQuery.formatted(addressesTable))
+        .execute(tuples)
         .map(this::mapToTenantAddresses)
         .map(TenantAddresses::new);
   }
