@@ -14,19 +14,21 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
-
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Stream;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.settings.server.TestContainersSupport;
 import org.folio.settings.server.main.MainVerticle;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
-
-import java.util.List;
-import java.util.UUID;
 
 class TenantAddressesServiceTest implements TestContainersSupport {
 
@@ -210,9 +212,18 @@ class TenantAddressesServiceTest implements TestContainersSupport {
     var baseTotal = getTotalRecords(TENANT);
     var name1 = uniqueName("address");
     var name2 = uniqueName("address");
-    createAddress(name1, "address1-full");
-    createAddress(name2, "address2-full");
+    createAddress(name1, "addr1-full");
+    createAddress(name2, "addr2-full");
 
+    // paginate: offset=0, limit=2 returns exactly 2
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .get("/tenant-addresses?offset=0&limit=2")
+        .then()
+        .statusCode(200)
+        .body("addresses.size()", is(2));
+
+    // paginate: offset=0, limit=1 returns exactly 1
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT)
         .get("/tenant-addresses?limit=1&offset=0")
@@ -220,6 +231,7 @@ class TenantAddressesServiceTest implements TestContainersSupport {
         .statusCode(200)
         .body("addresses.size()", is(1));
 
+    // paginate: offset=1, limit=1 returns exactly 1
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT)
         .get("/tenant-addresses?limit=1&offset=1")
@@ -227,6 +239,7 @@ class TenantAddressesServiceTest implements TestContainersSupport {
         .statusCode(200)
         .body("addresses.size()", is(1));
 
+    // no params – all records returned, both names present
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT)
         .get("/tenant-addresses")
@@ -234,18 +247,35 @@ class TenantAddressesServiceTest implements TestContainersSupport {
         .statusCode(200)
         .body("addresses.size()", is(baseTotal + 2))
         .body("addresses.name", hasItems(name1, name2));
+
+    // cql.allRecords=1 behaves like no filter – both names still present
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .get("/tenant-addresses?query=cql.allRecords=1")
+        .then()
+        .statusCode(200)
+        .body("addresses.size()", is(baseTotal + 2))
+        .body("addresses.name", hasItems(name1, name2));
+  }
+
+  // --- filter tests --------------------------------------------------------
+
+  static Stream<String> filterQueries() {
+    return Stream.of(
+        "name==%s",           // exact match
+        "(name==%s)"          // wrapped in parens
+    );
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"name==%s", "(name==%s)"})
-  void getTenantAddressesByNameQuery(String queryTemplate) {
+  @MethodSource("filterQueries")
+  void getTenantAddressesFilterByName(String queryTemplate) {
     var name = uniqueName("address");
-    createAddress(name, "address-query-full");
+    createAddress(name, "addr-filter-full");
 
-    var query = queryTemplate.formatted(name);
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT)
-        .get("/tenant-addresses?query=" + query)
+        .get("/tenant-addresses?query=" + queryTemplate.formatted(name))
         .then()
         .statusCode(200)
         .body("addresses.size()", is(1))
@@ -253,13 +283,107 @@ class TenantAddressesServiceTest implements TestContainersSupport {
   }
 
   @Test
-  void getTenantAddressesByNameQueryNoMatch() {
+  void getTenantAddressesFilterById() {
+    var name = uniqueName("address");
+    var createdId = createAddress(name, "addr-filter-by-id");
+
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT)
-        .get("/tenant-addresses?query=name==this-name-does-not-exist-" + UUID.randomUUID())
+        .get("/tenant-addresses?query=id==" + createdId)
+        .then()
+        .statusCode(200)
+        .body("addresses.size()", is(1))
+        .body("addresses[0].id", is(createdId))
+        .body("addresses[0].name", is(name));
+  }
+
+  @Test
+  void getTenantAddressesFilterByAddress() {
+    var name = uniqueName("address");
+    var addr = "unique-addr-value-" + UUID.randomUUID();
+    createAddress(name, addr);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .get("/tenant-addresses?query=address==" + addr)
+        .then()
+        .statusCode(200)
+        .body("addresses.size()", is(1))
+        .body("addresses[0].name", is(name));
+  }
+
+  @Test
+  void getTenantAddressesFilterByMetadataCreatedByUserId() {
+    var name = uniqueName("address");
+    createAddress(name, "addr-meta-full");
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .get("/tenant-addresses?query=createdbyuserid==" + TEST_USER_ID)
+        .then()
+        .statusCode(200)
+        .body("addresses.name", hasItems(name));
+  }
+
+  @Test
+  void getTenantAddressesFilterByMetadataUpdatedByUserId() {
+    var name = uniqueName("address");
+    createAddress(name, "addr-meta-full");
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .get("/tenant-addresses?query=updatedbyuserid==" + TEST_USER_ID)
+        .then()
+        .statusCode(200)
+        .body("addresses.name", hasItems(name));
+  }
+
+  @Test
+  void getTenantAddressesFilterNoMatch() {
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .get("/tenant-addresses?query=name==no-such-name-" + UUID.randomUUID())
         .then()
         .statusCode(200)
         .body("addresses.size()", is(0));
+  }
+
+  // --- sort tests ----------------------------------------------------------
+
+  static Stream<Arguments> sortQueries() {
+    return Stream.of(
+        Arguments.of("id", "sort.ascending"),
+        Arguments.of("id", "sort.descending"),
+        Arguments.of("name", "sort.ascending"),
+        Arguments.of("name", "sort.descending"),
+        Arguments.of("address", "sort.ascending"),
+        Arguments.of("address", "sort.descending"),
+        Arguments.of("createdbyuserid", "sort.ascending"),
+        Arguments.of("createdbyuserid", "sort.descending"),
+        Arguments.of("updatedbyuserid", "sort.ascending"),
+        Arguments.of("updatedbyuserid", "sort.descending"),
+        Arguments.of("createddate", "sort.ascending"),
+        Arguments.of("createddate", "sort.descending"),
+        Arguments.of("updateddate", "sort.ascending"),
+        Arguments.of("updateddate", "sort.descending")
+    );
+  }
+
+  @ParameterizedTest(name = "sortby {0}/{1}")
+  @MethodSource("sortQueries")
+  void getTenantAddressesSortBy(String field, String direction) {
+    var nameA = uniqueName("sort-addr");
+    var nameB = uniqueName("sort-addr");
+    createAddress(nameA, "sort-full-a");
+    createAddress(nameB, "sort-full-b");
+
+    var query = "cql.allRecords=1 sortby " + field + "/" + direction;
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT)
+        .get("/tenant-addresses?query=" + query)
+        .then()
+        .statusCode(200)
+        .body("addresses.size()", is(Matchers.greaterThanOrEqualTo(2)));
   }
 
   @Test

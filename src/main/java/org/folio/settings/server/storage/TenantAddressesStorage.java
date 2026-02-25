@@ -3,8 +3,11 @@ package org.folio.settings.server.storage;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.folio.settings.server.util.StringUtil.isBlank;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.sqlclient.Row;
@@ -14,26 +17,26 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.regex.Pattern;
+import java.util.function.BiConsumer;
 import org.folio.okapi.common.SemVer;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.settings.server.data.Metadata;
 import org.folio.settings.server.data.TenantAddress;
-import org.folio.settings.server.data.TenantAddresses;
-import org.folio.settings.server.util.StringUtil;
 import org.folio.tlib.TenantInitConf;
+import org.folio.tlib.postgres.PgCqlDefinition;
 import org.folio.tlib.postgres.TenantPgPool;
+import org.folio.tlib.postgres.cqlfield.PgCqlFieldAlwaysMatches;
+import org.folio.tlib.postgres.cqlfield.PgCqlFieldText;
+import org.folio.tlib.postgres.cqlfield.PgCqlFieldTimestamp;
+import org.folio.tlib.postgres.cqlfield.PgCqlFieldUuid;
 import org.folio.util.PercentCodec;
 
 public class TenantAddressesStorage {
 
   private static final SemVer SEM_VER_1_3_0 = new SemVer("1.3.0");
   private static final String TENANT_ADDRESSES = "tenant_addresses";
-  private static final Pattern NAME_QUERY_PATTERN =
-      Pattern.compile("\\(?name==\\s*([^ )]+)\\s*\\)?");
 
   private final TenantPgPool pool;
-
   private final String addressesTable;
 
   /**
@@ -172,24 +175,32 @@ public class TenantAddressesStorage {
   /**
    * Get tenant addresses.
    */
-  public Future<TenantAddresses> getTenantAddresses(String query, int offset, int limit) {
-    String sqlQuery;
-    Tuple tuples;
-    if (StringUtil.isBlank(query)) {
-      sqlQuery = "SELECT id, name, address, createdbyuserid, createddate, "
-          + "updatedbyuserid, updateddate FROM %s ORDER BY name LIMIT $1 OFFSET $2";
-      tuples = Tuple.of(limit, offset);
-    } else {
-      sqlQuery = "SELECT id, name, address, createdbyuserid, createddate, "
-          + "updatedbyuserid, updateddate FROM %s WHERE name = $1 "
-          + "ORDER BY name LIMIT $2 OFFSET $3";
-      var name = NAME_QUERY_PATTERN.matcher(query).replaceAll("$1");
-      tuples = Tuple.of(name, limit, offset);
+  public Future<Void> getTenantAddresses(HttpServerResponse response, String query,
+                                         int offset, int limit, ObjectMapper objectMapper) {
+    var definition = PgCqlDefinition.create();
+    definition.addField("cql.allRecords", new PgCqlFieldAlwaysMatches());
+    definition.addField("id", new PgCqlFieldUuid());
+    definition.addField("name", new PgCqlFieldText().withExact());
+    definition.addField("address", new PgCqlFieldText().withLikeOps());
+    definition.addField("createdbyuserid", new PgCqlFieldUuid());
+    definition.addField("createddate", new PgCqlFieldTimestamp());
+    definition.addField("updatedbyuserid", new PgCqlFieldUuid());
+    definition.addField("updateddate", new PgCqlFieldTimestamp());
+    var request = new Paginator.PaginationRequest(query, offset, limit, definition);
+    BiConsumer<HttpServerResponse, Row> rowMapper =
+        (HttpServerResponse resp, Row row) -> mapToResponse(response, row, objectMapper);
+    var paginator = new Paginator(addressesTable, request, rowMapper);
+    return pool.withTransaction(
+        connection -> paginator.streamResult(response, connection, "addresses"));
+  }
+
+  private void mapToResponse(HttpServerResponse response, Row row, ObjectMapper objectMapper) {
+    var entry = mapToTenantAddress(row);
+    try {
+      response.write(objectMapper.writeValueAsString(entry));
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException(e);
     }
-    return pool.preparedQuery(sqlQuery.formatted(addressesTable))
-        .execute(tuples)
-        .map(this::mapToTenantAddresses)
-        .map(TenantAddresses::new);
   }
 
   /**
@@ -244,12 +255,20 @@ public class TenantAddressesStorage {
 
   private List<TenantAddress> mapToTenantAddresses(RowSet<Row> rowSet) {
     var addresses = new ArrayList<TenantAddress>();
-    rowSet.forEach(row -> addresses.add(new TenantAddress(
+    rowSet.forEach(row -> addresses.add(mapToTenantAddress(row)));
+    return addresses;
+  }
+
+  private TenantAddress mapToTenantAddress(Row row) {
+    return new TenantAddress(
         row.getUUID("id").toString(),
         row.getString("name"),
         row.getString("address"),
-        mapToMetadata(row))));
-    return addresses;
+        mapToMetadata(row));
+  }
+
+  private Future<TenantAddress> mapToTenantAddress(RowSet<Row> rowSet) {
+    return validateRowCount(rowSet).map(v -> mapToTenantAddresses(rowSet).getFirst());
   }
 
   private Metadata mapToMetadata(Row row) {
@@ -258,10 +277,6 @@ public class TenantAddressesStorage {
     var updatedByUserId = row.getUUID("updatedbyuserid");
     var updatedDate = row.getLocalDateTime("updateddate").atOffset(java.time.ZoneOffset.UTC);
     return new Metadata(createdByUserid, createdDate, updatedByUserId, updatedDate);
-  }
-
-  private Future<TenantAddress> mapToTenantAddress(RowSet<Row> rowSet) {
-    return validateRowCount(rowSet).map(v -> mapToTenantAddresses(rowSet).getFirst());
   }
 
   private Future<Void> validateRowCount(RowSet<Row> rowSet) {

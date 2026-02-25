@@ -1,17 +1,13 @@
 package org.folio.settings.server.storage;
 
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgException;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowIterator;
-import io.vertx.sqlclient.RowStream;
-import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Tuple;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +16,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.settings.server.data.Entry;
@@ -361,70 +356,8 @@ public class SettingsStorage {
     log.debug("SQL: {}", sqlQuery);
     String countQuery = "SELECT COUNT(*) FROM " + from;
     return pool.withTransaction(
-        connection -> streamResult(response, connection, sqlQuery, countQuery));
-  }
-
-  Future<Void> streamResult(HttpServerResponse response,
-      SqlConnection connection, String query, String countQuery) {
-
-    Promise<Void> promise = Promise.promise();
-    String property = "items";
-    int sqlStreamFetchSize = 100;
-
-    connection.prepare(query)
-        .onFailure(promise::fail)
-        .onSuccess(pq -> {
-          response.setChunked(true);
-          response.putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
-          response.write("{ \"" + property + "\" : [");
-          AtomicBoolean first = new AtomicBoolean(true);
-          RowStream<Row> stream = pq.createStream(sqlStreamFetchSize);
-          stream.handler(row -> {
-            if (!first.getAndSet(false)) {
-              response.write(",");
-            }
-            Entry entry = fromRow(row);
-            response.write(JsonObject.mapFrom(entry).encode());
-          });
-          stream.endHandler(end -> {
-            stream.close()
-                .compose(x -> pq.close())
-                .compose(x -> getTotalRecords(connection, countQuery))
-                .onSuccess(totalRecords -> {
-                  resultFooter(response, totalRecords, null);
-                  promise.complete();
-                })
-                .onFailure(f -> {
-                  log.error("get total records error: {}", f.getMessage(), f);
-                  resultFooter(response, null, f.getMessage());
-                  promise.fail(f);
-                });
-          });
-          stream.exceptionHandler(e -> {
-            log.error("stream error: {}", e.getMessage(), e);
-            resultFooter(response, null, e.getMessage());
-            promise.fail(e);
-          });
-        });
-
-    return promise.future();
-  }
-
-  static Future<Integer> getTotalRecords(SqlConnection connection, String countQuery) {
-    return connection.query(countQuery).execute()
-        .map(rowSet -> rowSet.iterator().next().getInteger(0));
-  }
-
-  void resultFooter(HttpServerResponse response, Integer totalRecords, String diagnostic) {
-    JsonObject resultInfo = new JsonObject();
-    resultInfo.put("totalRecords", totalRecords);
-    JsonArray diagnostics = new JsonArray();
-    if (diagnostic != null) {
-      diagnostics.add(new JsonObject().put("message", diagnostic));
-    }
-    resultInfo.put("diagnostics", diagnostics);
-    response.write("], \"resultInfo\": " + resultInfo.encode() + "}");
-    response.end();
+        connection -> StreamHelper.streamResult(response, connection, sqlQuery, countQuery,
+            "items", (resp, row) -> resp.write(JsonObject.mapFrom(fromRow(row)).encode())));
   }
 
 }

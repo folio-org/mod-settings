@@ -44,16 +44,7 @@ public final class TenantAddressesService {
     var tmp = ctx.queryParam("query");
     var query = tmp.isEmpty() ? null : tmp.getFirst();
     return new TenantAddressesStorage(ctx.vertx(), TenantUtil.tenant(ctx))
-        .getTenantAddresses(query, offset, limit)
-        .onSuccess(tenantAddresses -> {
-          try {
-            HttpResponse.responseJson(ctx, HTTP_OK.toInt())
-                .end(objectMapper.writeValueAsString(tenantAddresses));
-          } catch (JsonProcessingException e) {
-            response400(ctx, "Error processing JSON");
-          }
-        })
-        .mapEmpty();
+        .getTenantAddresses(ctx.response(), query, offset, limit, objectMapper);
   }
 
   /**
