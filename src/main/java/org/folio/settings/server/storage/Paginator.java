@@ -17,9 +17,15 @@ public class Paginator {
   private final String countQuery;
   private final BiConsumer<HttpServerResponse, Row> rowMapper;
 
+  /**
+   * Pagination request parameters.
+   */
   public record PaginationRequest(
       String query, Integer offset, Integer limit, PgCqlDefinition definition) {}
 
+  /**
+   * Create a paginator for the given table and request.
+   */
   public Paginator(String tableName,
                    PaginationRequest request,
                    BiConsumer<HttpServerResponse, Row> rowMapper) {
@@ -36,7 +42,11 @@ public class Paginator {
     log.debug("Paginator:: Count SQL query: {}", this.countQuery);
   }
 
-  public Future<Void> streamResult(HttpServerResponse response, SqlConnection connection, String property) {
+  /**
+   * Stream paginated results to the HTTP response.
+   */
+  public Future<Void> streamResult(
+      HttpServerResponse response, SqlConnection connection, String property) {
     return StreamHelper.streamResult(
         response, connection, selectQuery, countQuery, property, rowMapper);
   }
