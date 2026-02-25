@@ -74,8 +74,7 @@ public final class StreamHelper {
     return promise.future();
   }
 
-  private static void resultFooter(
-      HttpServerResponse response, Integer totalRecords, String diagnostic) {
+  private static void resultFooter(HttpServerResponse response, Integer totalRecords, String diagnostic) {
     var resultInfo = new JsonObject();
     resultInfo.put("totalRecords", totalRecords);
     var diagnostics = new JsonArray();
