@@ -64,7 +64,7 @@ The practical outcome is that scope-based settings permissions such as `mod-sett
 
 It seems that `.manage` is the conventional action verb to use for scope-based settings permissions, as seen in examples such as `mod-settings.global.read.ui-erm-usage.manage` and `mod-settings.global.read.ui-tags.tags.manage`. (That is not documented as acceptable for back-end modules, but by observation it must be, and it's probably best to follow prior art.)
 
-Note: if renaming an existing scope-based settings permission for Eureka compatibility, don't forget to [use `replaces` to keep compatibility with the old pemrission name](https://github.com/folio-org/okapi/blob/master/doc/guide.md#permissions-and-the-_tenantpermissions-interface).
+Note: if renaming an existing scope-based settings permission for Eureka compatibility, don't forget to [use `replaces` to keep compatibility with the old permission name](https://github.com/folio-org/okapi/blob/master/doc/guide.md#permissions-and-the-_tenantpermissions-interface).
 
 ## API
 
