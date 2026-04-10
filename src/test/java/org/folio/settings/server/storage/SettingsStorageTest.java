@@ -2,6 +2,7 @@ package org.folio.settings.server.storage;
 
 import io.vertx.core.json.JsonArray;
 import java.util.UUID;
+import org.folio.settings.server.data.Entry;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -94,5 +95,27 @@ public class SettingsStorageTest {
     assertThat(SettingsStorage.getCqlLimitPermissions(perms, null),
         contains("scope == \"s1\""));
   }
+
+    @Test
+    public void checkDesiredPermissionsGlobalWriteWithArbitrarySuffix() {
+        String scope = "4f3a58cf-971f-4be5-9c97-2efddf07f4e9";
+        Entry entry = new Entry();
+        entry.setScope(scope);
+        entry.setUserId(null);
+        JsonArray perms = new JsonArray().add("mod-settings.global.write." + scope + ".anyTailToken");
+
+        assertThat(SettingsStorage.checkDesiredPermissions("write", perms, entry, null), is(true));
+    }
+
+    @Test
+    public void checkDesiredPermissionsDoesNotMatchScopePrefixCollision() {
+        String scope = "abc";
+        Entry entry = new Entry();
+        entry.setScope(scope);
+        entry.setUserId(null);
+        JsonArray perms = new JsonArray().add("mod-settings.global.write." + scope + "x.tail");
+
+        assertThat(SettingsStorage.checkDesiredPermissions("write", perms, entry, null), is(false));
+    }
 
 }

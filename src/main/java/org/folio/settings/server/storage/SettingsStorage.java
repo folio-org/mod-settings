@@ -99,22 +99,31 @@ public class SettingsStorage {
                                          Entry entry, UUID currentUser) {
     UUID userId = entry.getUserId();
     if (userId == null) {
-      return permissions.contains(PERM_PREFIX + "." + PERM_GLOBAL + "."
-          + type + "." + entry.getScope())
-          || permissions.contains(PERM_PREFIX + "." + PERM_GLOBAL + "."
-          + entry.getScope() + "." + type);
+      return hasScopePermission(permissions, PERM_GLOBAL, type, entry.getScope());
     }
-    if (permissions.contains(PERM_PREFIX + "." + PERM_USERS + "."
-        + type + "." + entry.getScope())
-        || permissions.contains(PERM_PREFIX + "." + PERM_USERS + "."
-        + entry.getScope() + "." + type)) {
+    if (hasScopePermission(permissions, PERM_USERS, type, entry.getScope())) {
       return true;
     }
-    return (permissions.contains(PERM_PREFIX + "." + PERM_OWNER + "."
-        + type + "." + entry.getScope())
-        || permissions.contains(PERM_PREFIX + "." + PERM_OWNER + "."
-        + entry.getScope() + "." + type))
+    return hasScopePermission(permissions, PERM_OWNER, type, entry.getScope())
         && currentUser != null && currentUser.equals(userId);
+  }
+
+  private static boolean hasScopePermission(
+      JsonArray permissions, String level, String type, String scope) {
+    String perm1 = PERM_PREFIX + "." + level + "." + type + "." + scope;
+    String perm2 = PERM_PREFIX + "." + level + "." + scope + "." + type;
+    return hasPermissionWithOptionalSuffix(permissions, perm1)
+        || hasPermissionWithOptionalSuffix(permissions, perm2);
+  }
+
+  private static boolean hasPermissionWithOptionalSuffix(JsonArray permissions, String permission) {
+    String prefix = permission + ".";
+    for (Object p : permissions) {
+      if (p instanceof String str && (str.equals(permission) || str.startsWith(prefix))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   static List<String> getCqlLimitPermissions(

@@ -74,6 +74,51 @@ public class MainVerticleTest extends TestBase {
   }
 
   @Test
+  public void testCrudGlobalOkWithPermissionSuffix() {
+    // Same CRUD coverage as testCrudGlobalOk, but permission tokens include a 5th segment.
+    JsonArray ar = new JsonArray()
+        .add("simple")
+        .add(new JsonObject().put("key", "k1"))
+        .add(new JsonArray().add("1").add("2"))
+        .add(234);
+
+    for (int i = 0; i < ar.size(); i++) {
+      JsonObject en = new JsonObject()
+          .put("id", UUID.randomUUID().toString())
+          .put("scope", UUID.randomUUID().toString())
+          .put("key", "k1")
+          .put("value", ar.getValue(i));
+      JsonArray permRead = new JsonArray().add("mod-settings.global.read." + en.getString("scope") + ".manage");
+      JsonArray permWrite = new JsonArray().add("mod-settings.global.write." + en.getString("scope") + ".post");
+
+      RestAssured.given()
+          .header(XOkapiHeaders.TENANT, TENANT_1)
+          .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
+          .contentType(ContentType.JSON)
+          .body(en.encode())
+          .post("/settings/entries")
+          .then()
+          .statusCode(204);
+
+      RestAssured.given()
+          .header(XOkapiHeaders.TENANT, TENANT_1)
+          .header(XOkapiHeaders.PERMISSIONS, permRead.encode())
+          .get("/settings/entries/" + en.getString("id"))
+          .then()
+          .statusCode(200)
+          .contentType(ContentType.JSON)
+          .body(is(en.encode()));
+
+      RestAssured.given()
+          .header(XOkapiHeaders.TENANT, TENANT_1)
+          .header(XOkapiHeaders.PERMISSIONS, permWrite.encode())
+          .delete("/settings/entries/" + en.getString("id"))
+          .then()
+          .statusCode(204);
+    }
+  }
+
+  @Test
   public void testPostMissingTenant() {
     JsonObject en = new JsonObject()
         .put("id", UUID.randomUUID().toString())
