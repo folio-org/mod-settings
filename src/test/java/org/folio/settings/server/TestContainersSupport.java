@@ -4,7 +4,7 @@ import org.folio.tlib.postgres.TenantPgPool;
 import org.folio.tlib.postgres.testing.TenantPgPoolContainer;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -15,7 +15,7 @@ import io.vertx.junit5.VertxExtension;
 public interface TestContainersSupport {
 
   @Container
-  PostgreSQLContainer<?> postgresContainer = TenantPgPoolContainer.create();
+  PostgreSQLContainer postgresContainer = TenantPgPoolContainer.create();
 
   @BeforeAll
   static void setupContainers() {

@@ -18,7 +18,7 @@ import org.folio.settings.server.main.MainVerticle;
 import org.folio.tlib.postgres.testing.TenantPgPoolContainer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -38,7 +38,7 @@ public class TestBase {
   protected static final String MODULE_VERSION = "1.0.0";
   protected static final String MODULE_ID = MODULE_PREFIX + "-" + MODULE_VERSION;
 
-  public static PostgreSQLContainer<?> postgresSQLContainer;
+  public static PostgreSQLContainer postgresSQLContainer;
 
   @AfterClass
   public static void afterClass(TestContext context) {
