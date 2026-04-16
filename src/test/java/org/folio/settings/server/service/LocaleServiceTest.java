@@ -12,7 +12,6 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.sqlclient.Tuple;
-
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.settings.server.TestContainersSupport;
 import org.folio.settings.server.main.MainVerticle;
@@ -22,6 +21,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 class LocaleServiceTest implements TestContainersSupport {
@@ -43,6 +43,7 @@ class LocaleServiceTest implements TestContainersSupport {
   @BeforeAll
   static void beforeAll(Vertx vertx, VertxTestContext vtc) {
     RestAssured.baseURI = "http://localhost:8081";
+    RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     vertx.deployVerticle(new MainVerticle())
     .compose(x -> deployModConfigurationMock(vertx))
     .compose(x -> postTenant(vertx, "http://localhost:8081", "diku", "1.3.0"))
@@ -87,8 +88,8 @@ class LocaleServiceTest implements TestContainersSupport {
   @CsvSource({
     "locale, ''",
     "currency, ' '",
-    "timezone, '  '",
-    "numberingSystem,",
+    "timezone,",
+    "numberingSystem, ' '",
   })
   void blank(String key, String value) {
     RestAssured.given()
@@ -102,12 +103,18 @@ class LocaleServiceTest implements TestContainersSupport {
   }
 
   @ParameterizedTest
-  @ValueSource(strings={"latn", "arab"})
+  @NullSource
+  @ValueSource(strings={"latn", "arab", ""})
   void numberingSystem(String value) {
+    var json = getDe().put("numberingSystem", value);
+    if ("".equals(value)) {
+      assertThat(json.remove("numberingSystem"), is(""));
+      value = null;
+    }
     RestAssured.given()
     .header(XOkapiHeaders.TENANT, "diku")
     .header("Content-Type", "application/json")
-    .body(getDe().put("numberingSystem", value).encode())
+    .body(json.encode())
     .put("/locale")
     .then()
     .statusCode(201);
@@ -121,7 +128,7 @@ class LocaleServiceTest implements TestContainersSupport {
   }
 
   @ParameterizedTest
-  @ValueSource(strings={"LATN", "latin", " latn"})
+  @ValueSource(strings={"LATN", "latin", " latn", ""})
   void illegalNumberingSystem(String value) {
     RestAssured.given()
     .header(XOkapiHeaders.TENANT, "diku")
