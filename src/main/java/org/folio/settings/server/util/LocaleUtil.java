@@ -1,6 +1,9 @@
 package org.folio.settings.server.util;
 
 public final class LocaleUtil {
+  private LocaleUtil() {
+  }
+
   /**
    * Is "latn", "arab", or null.
    */

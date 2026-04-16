@@ -63,7 +63,7 @@ public final class LocaleService {
   }
 
   private static Future<Void> response500(RoutingContext ctx, Throwable t) {
-    log.error("500 internal server error", t.getMessage(), t);
+    log.error("500 internal server error", t);
     return HttpResponse.responseText(ctx, HTTP_INTERNAL_ERROR).end();
   }
 }
