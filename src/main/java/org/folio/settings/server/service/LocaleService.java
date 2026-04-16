@@ -9,12 +9,17 @@ import static org.folio.settings.server.util.StringUtil.isBlank;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.settings.server.data.LocaleSettings;
 import org.folio.settings.server.storage.LocaleStorage;
+import org.folio.settings.server.util.LocaleUtil;
 import org.folio.tlib.util.TenantUtil;
 
 public final class LocaleService {
+  private static final Logger log = LogManager.getLogger(LocaleService.class);
+
   private LocaleService() {
   }
 
@@ -42,19 +47,23 @@ public final class LocaleService {
       response400(ctx, "timezone missing");
     } else if (isBlank(localeSettings.getCurrency())) {
       response400(ctx, "currency missing");
-    } else if (!"latn".equals(localeSettings.getNumberingSystem())
-        && !"arab".equals(localeSettings.getNumberingSystem())) {
-      response400(ctx, "numberingSystem must be latn or arab");
+    } else if (!LocaleUtil.isValidNumberingSystem(localeSettings.getNumberingSystem())) {
+      response400(ctx, "numberingSystem must be latn or arab, or not defined");
     } else {
       return new LocaleStorage(ctx.vertx(), TenantUtil.tenant(ctx))
           .updateLocale(localeSettings)
           .compose(x -> HttpResponse.responseText(ctx, HTTP_CREATED).end(),
-              e -> HttpResponse.responseText(ctx, HTTP_INTERNAL_ERROR).end());
+              e -> response500(ctx, e));
     }
     return Future.succeededFuture();
   }
 
   private static void response400(RoutingContext ctx, String msg) {
     HttpResponse.responseText(ctx, HTTP_BAD_REQUEST).end(msg);
+  }
+
+  private static Future<Void> response500(RoutingContext ctx, Throwable t) {
+    log.error("500 internal server error", t);
+    return HttpResponse.responseText(ctx, HTTP_INTERNAL_ERROR).end();
   }
 }

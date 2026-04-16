@@ -12,6 +12,7 @@ import java.util.List;
 import org.folio.okapi.common.SemVer;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.settings.server.data.LocaleSettings;
+import org.folio.settings.server.util.LocaleUtil;
 import org.folio.tlib.TenantInitConf;
 import org.folio.tlib.postgres.TenantPgPool;
 import org.folio.util.PercentCodec;
@@ -19,6 +20,7 @@ import org.folio.util.PercentCodec;
 public class LocaleStorage {
 
   private static final SemVer SEM_VER_1_3_0 = new SemVer("1.3.0");
+  private static final SemVer SEM_VER_1_3_1 = new SemVer("1.3.1");
 
   private final TenantPgPool pool;
 
@@ -48,7 +50,7 @@ public class LocaleStorage {
            locale text NOT NULL,
            currency text NOT NULL,
            timezone text NOT NULL,
-           numberingsystem text NOT NULL)
+           numberingsystem text);
         """.formatted(localeTable),
 
         """
@@ -59,7 +61,7 @@ public class LocaleStorage {
                     'en-US',
                     'USD',
                     'UTC',
-                    'latn')
+                    null)
             ON CONFLICT DO NOTHING;
           EXCEPTION WHEN SQLSTATE 'P0001' THEN NULL;
           END
@@ -87,17 +89,29 @@ public class LocaleStorage {
         ));
   }
 
+  private Future<Void> allowNullInNumberingSystem() {
+    return pool.execute(List.of(
+        """
+        ALTER TABLE %s ALTER COLUMN numberingsystem DROP NOT NULL;
+        """.formatted(localeTable)));
+  }
+
   private Future<Void> migrateData(TenantInitConf tenantInitConf, String oldVersion) {
     var oldSemVersion = new SemVer(oldVersion);
-    if (SEM_VER_1_3_0.compareTo(oldSemVersion) <= 0) {
-      return Future.succeededFuture();
+    var future = Future.<Void>succeededFuture();
+
+    if (oldSemVersion.compareTo(SEM_VER_1_3_0) < 0) {
+      var webClient = WebClient.create(tenantInitConf.vertx());
+      future = future.compose(x -> getAndDeleteFromModConfiguration(tenantInitConf, webClient))
+          .compose(this::updateLocaleSanitized)
+          .onComplete(x -> webClient.close());
     }
 
-    var webClient = WebClient.create(tenantInitConf.vertx());
-    return getAndDeleteFromModConfiguration(tenantInitConf, webClient)
-        .compose(this::updateLocaleSanitized)
-        .onComplete(x -> webClient.close())
-        .mapEmpty();
+    if (oldSemVersion.compareTo(SEM_VER_1_3_1) < 0) {
+      future = future.compose(x -> allowNullInNumberingSystem());
+    }
+
+    return future;
   }
 
   private static Future<LocaleSettings> getAndDeleteFromModConfiguration(
@@ -173,9 +187,8 @@ public class LocaleStorage {
     if (isBlank(localeSettings.getCurrency())) {
       localeSettings.setCurrency("USD");
     }
-    if (!"latn".equals(localeSettings.getNumberingSystem())
-        && !"arab".equals(localeSettings.getNumberingSystem())) {
-      localeSettings.setNumberingSystem("latn");
+    if (!LocaleUtil.isValidNumberingSystem(localeSettings.getNumberingSystem())) {
+      localeSettings.setNumberingSystem(null);
     }
     return updateLocale(localeSettings);
   }
