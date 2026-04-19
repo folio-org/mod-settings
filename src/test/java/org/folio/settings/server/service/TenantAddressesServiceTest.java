@@ -34,7 +34,7 @@ class TenantAddressesServiceTest implements TestContainersSupport {
 
   private static final String TEST_USER_ID = "11111111-1111-1111-1111-111111111111";
   private static final String ISO_DATETIME_PATTERN =
-      "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{2,6})?\\+00:00";
+      "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?\\+00:00";
   private static final String TENANT = "diku";
 
   public static final String ADDRESS_CONFIGS = """
