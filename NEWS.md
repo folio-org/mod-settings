@@ -1,3 +1,6 @@
+## 1.4.0-SNAPSHOT
+* Automatically migrate tags_enabled setting from mod-configuration to mod-settings [MODSET-47](https://folio-org.atlassian.net/browse/MODSET-47)
+
 ## 1.3.1
 * Make numberingSystem optional in `/locale` [MODSET-44](https://folio-org.atlassian.net/browse/MODSET-44)
 
