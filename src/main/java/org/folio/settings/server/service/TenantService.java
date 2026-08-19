@@ -33,7 +33,7 @@ public class TenantService implements TenantInitHooks {
     return new BaseUrlStorage(vertx, tenant).init(tenantInitConf, version)
         .compose(x -> new LocaleStorage(vertx, tenant).init(tenantInitConf, version))
         .compose(x -> new TenantAddressesStorage(vertx, tenant).init(tenantInitConf, version))
-        .compose(x -> new SettingsStorage(vertx, tenant, null, null).init())
+        .compose(x -> new SettingsStorage(vertx, tenant, null, null).init(version))
         .compose(x -> new TagsStorage(vertx, tenant).init(tenantInitConf, version));
   }
 }

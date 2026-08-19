@@ -18,6 +18,7 @@ import java.util.TreeSet;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.okapi.common.SemVer;
 import org.folio.settings.server.data.Entry;
 import org.folio.tlib.postgres.PgCqlDefinition;
 import org.folio.tlib.postgres.PgCqlQuery;
@@ -28,6 +29,8 @@ import org.folio.tlib.postgres.cqlfield.PgCqlFieldUuid;
 public class SettingsStorage {
 
   private static final Logger log = LogManager.getLogger(SettingsStorage.class);
+
+  private static final SemVer SEM_VER_1_3_2 = new SemVer("1.3.2");
 
   private static final String CREATE_IF_NO_EXISTS = "CREATE TABLE IF NOT EXISTS ";
 
@@ -69,7 +72,17 @@ public class SettingsStorage {
    *
    * @return async result
    */
-  public Future<Void> init() {
+  public Future<Void> init(String oldVersion) {
+    return init()
+        .compose(x -> migrateAuthorityArchivesExpiration(oldVersion));
+  }
+
+  /**
+   * Prepares storage for a tenant, AKA tenant init.
+   *
+   * @return async result
+   */
+  private Future<Void> init() {
     return pool.execute(List.of(
         CREATE_IF_NO_EXISTS + settingsTable
             + "(id uuid NOT NULL PRIMARY KEY,"
@@ -84,6 +97,23 @@ public class SettingsStorage {
         "CREATE UNIQUE INDEX IF NOT EXISTS settings_scope_key_global ON "
             + settingsTable + "(scope, key text_pattern_ops) WHERE userId is NULL"
     ));
+  }
+
+  private Future<Void> migrateAuthorityArchivesExpiration(String oldVersion) {
+    var oldSemVersion = new SemVer(oldVersion);
+    var future = Future.<Void>succeededFuture();
+
+    // data migration for Trillium: https://folio-org.atlassian.net/browse/MODSET-48
+    if (oldSemVersion.compareTo(SEM_VER_1_3_2) < 0) {
+      var sql = """
+            UPDATE %s
+            SET scope = 'authority-storage.manage'
+            WHERE scope = 'authority-storage'
+              AND key = 'authority-archives-expiration'
+            """.formatted(settingsTable);
+      future = future.compose(x -> pool.execute(List.of(sql)));
+    }
+    return future;
   }
 
   /**
