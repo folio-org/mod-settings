@@ -14,7 +14,6 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.folio.okapi.common.XOkapiHeaders;
@@ -33,7 +32,8 @@ class TagsServiceTest implements TestContainersSupport {
   private static final String SCOPE_QUERY = "scope=\"ui-tags.tags.manage\" and key=tags_enabled";
   private static final ConcurrentHashMap<String, Integer> MOCK_STATUS = new ConcurrentHashMap<>();
   private static final ConcurrentHashMap<String, String> MOCK_VALUE = new ConcurrentHashMap<>();
-  private static final Set<String> MOCK_MISMATCH = ConcurrentHashMap.newKeySet();
+  private static final ConcurrentHashMap<String, String> MOCK_MODULE = new ConcurrentHashMap<>();
+  private static final ConcurrentHashMap<String, String> MOCK_CONFIG_NAME = new ConcurrentHashMap<>();
 
   @BeforeAll
   static void beforeAll(Vertx vertx, VertxTestContext vtc) {
@@ -62,14 +62,12 @@ class TagsServiceTest implements TestContainersSupport {
           String body;
           if (value == null) {
             body = "{\"configs\":[]}";
-          } else if (MOCK_MISMATCH.contains(tenant)) {
-            body = """
-                {"configs":[{"id":"%s","module":"ORG","configName":"localeSettings","value":"%s"}]}
-                """.formatted(UUID.randomUUID(), value);
           } else {
+            String module = MOCK_MODULE.getOrDefault(tenant, "TAGS");
+            String configName = MOCK_CONFIG_NAME.getOrDefault(tenant, "tags_enabled");
             body = """
-                {"configs":[{"id":"%s","module":"TAGS","configName":"tags_enabled","value":"%s"}]}
-                """.formatted(UUID.randomUUID(), value);
+                {"configs":[{"id":"%s","module":"%s","configName":"%s","value":"%s"}]}
+                """.formatted(UUID.randomUUID(), module, configName, value);
           }
           req.response().setStatusCode(200).end(body);
         })
@@ -120,7 +118,6 @@ class TagsServiceTest implements TestContainersSupport {
   @Test
   void noConfigPresentSucceedsWithoutMigrating() {
     String tenant = "tagsempty";
-    // MOCK_VALUE has no entry for this tenant -> mock returns {"configs":[]}
 
     assertThat(postTenantExpectingResult(tenant, "1.4.0"), nullValue());
     assertNoEntry(tenant);
@@ -139,7 +136,28 @@ class TagsServiceTest implements TestContainersSupport {
   void mismatchedConfigEntrySucceedsWithoutMigrating() {
     String tenant = "tagsmismatch";
     MOCK_VALUE.put(tenant, "true");
-    MOCK_MISMATCH.add(tenant);
+    MOCK_MODULE.put(tenant, "ORG");
+    MOCK_CONFIG_NAME.put(tenant, "localeSettings");
+
+    assertThat(postTenantExpectingResult(tenant, "1.4.0"), nullValue());
+    assertNoEntry(tenant);
+  }
+
+  @Test
+  void moduleMismatchOnlySucceedsWithoutMigrating() {
+    String tenant = "tagsmodulemismatch";
+    MOCK_VALUE.put(tenant, "true");
+    MOCK_MODULE.put(tenant, "ORG");
+
+    assertThat(postTenantExpectingResult(tenant, "1.4.0"), nullValue());
+    assertNoEntry(tenant);
+  }
+
+  @Test
+  void configNameMismatchOnlySucceedsWithoutMigrating() {
+    String tenant = "tagsconfignamemismatch";
+    MOCK_VALUE.put(tenant, "true");
+    MOCK_CONFIG_NAME.put(tenant, "localeSettings");
 
     assertThat(postTenantExpectingResult(tenant, "1.4.0"), nullValue());
     assertNoEntry(tenant);
