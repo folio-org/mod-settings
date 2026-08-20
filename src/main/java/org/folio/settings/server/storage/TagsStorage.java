@@ -82,13 +82,13 @@ public class TagsStorage {
             return Future.succeededFuture(null);
           }
           var value = config.getString("value");
-          try {
-            return Future.succeededFuture(parseTagsEnabled(value));
-          } catch (IllegalArgumentException e) {
-            log.error("Failed to migrate tags_enabled setting for tenant {}: {}",
-                tenant, e.getMessage());
-            return Future.failedFuture("Failed to migrate tags_enabled setting: " + e.getMessage());
-          }
+          return parseTagsEnabled(value)
+              .recover(e -> {
+                log.error("Failed to migrate tags_enabled setting for tenant {}: {}",
+                    tenant, e.getMessage());
+                return Future.failedFuture(
+                    "Failed to migrate tags_enabled setting: " + e.getMessage());
+              });
         });
   }
 
@@ -102,25 +102,25 @@ public class TagsStorage {
     entry.setKey(TAGS_KEY);
     entry.setValue("value", tagsEnabled);
     return new SettingsStorage(vertx, tenant, null, null).createEntryWoCheck(entry)
-        .map(inserted -> {
+        .onSuccess(inserted -> {
           if (Boolean.TRUE.equals(inserted)) {
             log.info("Migrated tags_enabled={} setting for tenant {}", tagsEnabled, tenant);
           } else {
             log.info("tags_enabled setting already present in mod-settings for tenant {}, "
                 + "skipping migration", tenant);
           }
-          return null;
-        });
+        })
+        .mapEmpty();
   }
 
-  static boolean parseTagsEnabled(String value) {
+  static Future<Boolean> parseTagsEnabled(String value) {
     if ("true".equalsIgnoreCase(value)) {
-      return true;
+      return Future.succeededFuture(true);
     }
     if ("false".equalsIgnoreCase(value)) {
-      return false;
+      return Future.succeededFuture(false);
     }
-    throw new IllegalArgumentException("Cannot parse tags_enabled value: " + value);
+    return Future.failedFuture("Cannot parse tags_enabled value: " + value);
   }
 
   private static String uri(TenantInitConf tenantInitConf, String path, String toEncode) {

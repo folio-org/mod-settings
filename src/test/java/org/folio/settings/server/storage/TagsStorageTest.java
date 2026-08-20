@@ -1,8 +1,8 @@
 package org.folio.settings.server.storage;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -20,12 +20,14 @@ class TagsStorageTest {
     "False, false",
   })
   void parseTagsEnabled(String value, boolean expected) {
-    assertThat(TagsStorage.parseTagsEnabled(value), is(expected));
+    assertThat(TagsStorage.parseTagsEnabled(value).result(), is(expected));
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"maybe", "1", "0", "yes", "no", ""})
   void parseTagsEnabledRejectsInvalidValues(String value) {
-    assertThrows(IllegalArgumentException.class, () -> TagsStorage.parseTagsEnabled(value));
+    var future = TagsStorage.parseTagsEnabled(value);
+    assertThat(future.failed(), is(true));
+    assertThat(future.cause().getMessage(), containsString("Cannot parse tags_enabled value"));
   }
 }
