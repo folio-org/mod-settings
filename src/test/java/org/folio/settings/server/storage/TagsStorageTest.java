@@ -20,14 +20,14 @@ class TagsStorageTest {
     "False, false",
   })
   void parseTagsEnabled(String value, boolean expected) {
-    assertThat(TagsStorage.parseTagsEnabled(value).result(), is(expected));
+    assertThat(TagsStorage.parseTagsEnabled("tenant", value).result(), is(expected));
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"maybe", "1", "0", "yes", "no", ""})
   void parseTagsEnabledRejectsInvalidValues(String value) {
-    var future = TagsStorage.parseTagsEnabled(value);
+    var future = TagsStorage.parseTagsEnabled("tenant", value);
     assertThat(future.failed(), is(true));
-    assertThat(future.cause().getMessage(), containsString("Cannot parse tags_enabled value"));
+    assertThat(future.cause().getMessage(), containsString("cannot parse tags_enabled value"));
   }
 }

@@ -63,10 +63,8 @@ public class TagsStorage {
             return Future.succeededFuture(null);
           }
           if (status != HTTP_OK) {
-            log.error("Failed to migrate tags_enabled setting for tenant {}: "
-                + "unexpected status {} from mod-configuration", tenant, status);
-            return Future.failedFuture("Failed to migrate tags_enabled setting: unexpected status "
-                    + status + " from mod-configuration");
+            return migrationFailure(tenant, "unexpected status " + status
+                + " from mod-configuration");
           }
           var configs = httpResponse.bodyAsJsonObject().getJsonArray("configs");
           if (configs == null || configs.isEmpty()) {
@@ -82,13 +80,7 @@ public class TagsStorage {
             return Future.succeededFuture(null);
           }
           var value = config.getString("value");
-          return parseTagsEnabled(value)
-              .recover(e -> {
-                log.error("Failed to migrate tags_enabled setting for tenant {}: {}",
-                    tenant, e.getMessage());
-                return Future.failedFuture(
-                    "Failed to migrate tags_enabled setting: " + e.getMessage());
-              });
+          return parseTagsEnabled(tenant, value);
         });
   }
 
@@ -113,14 +105,19 @@ public class TagsStorage {
         .mapEmpty();
   }
 
-  static Future<Boolean> parseTagsEnabled(String value) {
+  static Future<Boolean> parseTagsEnabled(String tenant, String value) {
     if ("true".equalsIgnoreCase(value)) {
       return Future.succeededFuture(true);
     }
     if ("false".equalsIgnoreCase(value)) {
       return Future.succeededFuture(false);
     }
-    return Future.failedFuture("Cannot parse tags_enabled value: " + value);
+    return migrationFailure(tenant, "cannot parse tags_enabled value: " + value);
+  }
+
+  private static <T> Future<T> migrationFailure(String tenant, String reason) {
+    log.error("Failed to migrate tags_enabled setting for tenant {}: {}", tenant, reason);
+    return Future.failedFuture("Failed to migrate tags_enabled setting: " + reason);
   }
 
   private static String uri(TenantInitConf tenantInitConf, String path, String toEncode) {
