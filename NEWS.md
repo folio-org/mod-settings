@@ -1,7 +1,10 @@
+## 1.3.1
+* Make numberingSystem optional in `/locale` [MODSET-44](https://folio-org.atlassian.net/browse/MODSET-44)
+
 ## 1.3.0
 * Bump dependencies for Trillium (Vertx 5.0.10, vertx-lib 4.1.2). [MODSET-46](https://folio-org.atlassian.net/browse/MODSET-46)
 * Improve Addresses endpoint: pageable, optional address field, better serialization, audit fields. [MODSET-42](https://folio-org.atlassian.net/browse/MODSET-42)
-* Migrate FOLIO_HOST from mod-configuration to mod-settings (/base-url). [MODSET-40](https://folio-org.atlassian.net/browse/MODSET-40)
+* Migrate FOLIO\_HOST from mod-configuration to mod-settings (/base-url). [MODSET-40](https://folio-org.atlassian.net/browse/MODSET-40)
 * Migrate tenant addresses from mod-configuration to mod-settings. [MODSET-37](https://folio-org.atlassian.net/browse/MODSET-37)
 * Migrate from AbstractVerticle to VerticleBase. [MODSET-35](https://folio-org.atlassian.net/browse/MODSET-35)
 * Upgrade to Vert.x 5.0. [MODSET-34](https://folio-org.atlassian.net/browse/MODSET-34)

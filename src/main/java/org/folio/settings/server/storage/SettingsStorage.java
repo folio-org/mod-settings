@@ -205,6 +205,25 @@ public class SettingsStorage {
   }
 
   /**
+   * Create settings entry without permission check, skipping if one already exists.
+   *
+   * @param entry to be created
+   * @return async result: true if inserted; false if an entry already existed at scope/key
+   */
+  Future<Boolean> createEntryWoCheck(Entry entry) {
+    return pool.preparedQuery(
+            "INSERT INTO " + settingsTable
+                + " (id, scope, key, value, userId)"
+                + " VALUES ($1, $2, $3, $4, $5)"
+                + getOnConflictClause(entry) + " DO NOTHING"
+        )
+        .execute(Tuple.of(entry.getId(), entry.getScope(),
+            entry.getKey(), entry.getValue(),
+            entry.getUserId()))
+        .map(rowSet -> rowSet.rowCount() > 0);
+  }
+
+  /**
    * Get settings entry.
    *
    * @param id entry identifier
