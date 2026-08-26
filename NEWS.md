@@ -1,3 +1,6 @@
+## 1.3.3
+* Use "modulePermissions" for `POST /_/tenant` [MODSET-51](https://folio-org.atlassian.net/browse/MODSET-51)
+
 ## 1.3.2
 * Automatically migrate tags_enabled setting from mod-configuration to mod-settings [MODSET-47](https://folio-org.atlassian.net/browse/MODSET-47)
 

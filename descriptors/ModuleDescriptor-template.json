@@ -12,7 +12,7 @@
             "POST"
           ],
           "pathPattern": "/_/tenant",
-          "permissionsDesired": [
+          "modulePermissions": [
             "configuration.entries.collection.get",
             "configuration.entries.item.delete"
           ]
