@@ -67,9 +67,10 @@ class TenantAddressesServiceTest implements TestContainersSupport {
   @BeforeAll
   static void beforeAll(Vertx vertx, VertxTestContext vtc) {
     RestAssured.baseURI = "http://localhost:8081";
+
     vertx.deployVerticle(new MainVerticle())
         .compose(x -> deployModConfigurationMock(vertx))
-        .compose(x -> postTenant(vertx, "http://localhost:8081", TENANT, "1.3.0"))
+        .compose(x -> postTenant(vertx, TENANT, "1.3.0"))
         .onComplete(vtc.succeedingThenComplete());
   }
 

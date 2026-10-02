@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
-import io.restassured.RestAssured;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
@@ -112,26 +111,24 @@ class SettingsStorageTest implements TestContainersSupport {
 
   @Test
   void migration(Vertx vertx, VertxTestContext vtc) {
-    RestAssured.baseURI = "http://localhost:8081";
-    RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     var pool = TenantPgPool.pool(vertx, "diku");
 
     vertx.deployVerticle(new MainVerticle())
-    .compose(x -> postTenant(vertx, "http://localhost:8081", "diku", "0.0.0"))
+    .compose(x -> postTenant(vertx, "diku", "0.0.0"))
     .compose(x -> pool.execute("INSERT INTO " + pool.getSchema() + ".settings "
                     + "(id, key, scope, value) VALUES ($1, $2, $3, $4)",
                     Tuple.tuple(List.of(UUID.randomUUID(),
                         "authority-archives-expiration", "authority-storage", "v"))))
     .compose(x -> assertAuthorityArchivesExpiration(pool, "authority-storage"))
-    .compose(x -> postTenant(vertx, "http://localhost:8081", "diku", "1.3.1"))
+    .compose(x -> postTenant(vertx, "diku", "1.3.1"))
     .compose(x -> assertAuthorityArchivesExpiration(pool, "authority-storage.manage"))
     .compose(x -> resetScope(pool))
     .compose(x -> assertAuthorityArchivesExpiration(pool, "authority-storage"))
-    .compose(x -> postTenant(vertx, "http://localhost:8081", "diku", "1.3.2"))
+    .compose(x -> postTenant(vertx, "diku", "1.3.2"))
     .compose(x -> assertAuthorityArchivesExpiration(pool, "authority-storage.manage"))
     .compose(x -> resetScope(pool))
     .compose(x -> assertAuthorityArchivesExpiration(pool, "authority-storage"))
-    .compose(x -> postTenant(vertx, "http://localhost:8081", "diku", "1.3.3"))
+    .compose(x -> postTenant(vertx, "diku", "1.3.3"))
     .compose(x -> assertAuthorityArchivesExpiration(pool, "authority-storage"))
     .onComplete(vtc.succeedingThenComplete());
   }
