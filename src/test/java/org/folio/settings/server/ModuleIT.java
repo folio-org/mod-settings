@@ -31,7 +31,7 @@ import org.testcontainers.utility.DockerImageName;
 /**
  * Test that shaded fat uber jar and Dockerfile work.
  *
- * <p>Smoke tests: /admin/health and migration.
+ * <p>Smoke tests: /admin/health, install and upgrade.
  */
 @Testcontainers
 class ModuleIT {
@@ -68,8 +68,7 @@ class ModuleIT {
   @Container
   @SuppressWarnings("resource")
   static final GenericContainer<?> MOD_SETTINGS =
-    new GenericContainer<>(
-      new ImageFromDockerfile("mod-settings").withFileFromPath(".", Path.of(".")))
+    new GenericContainer<>(new ImageFromDockerfile("mod-settings").withFileFromPath(".", Path.of(".")))
     .dependsOn(OKAPI, POSTGRES)
     .withNetwork(NETWORK)
     .withExposedPorts(8081)
@@ -89,7 +88,6 @@ class ModuleIT {
     RestAssured.reset();
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     RestAssured.baseURI = "http://" + MOD_SETTINGS.getHost() + ":" + MOD_SETTINGS.getFirstMappedPort();
-    System.out.println("qqq tenant(" + tenant + "), baseURI=" + RestAssured.baseURI);
     var headers = tenant == null
         ? Map.of("X-Okapi-Url", "http://okapi:8080")
         : Map.of("X-Okapi-Url", "http://okapi:8080", "X-Okapi-Tenant", tenant);
