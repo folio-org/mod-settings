@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.junit.jupiter.Container;
@@ -76,7 +77,8 @@ class ModuleIT {
     .withEnv("DB_PORT", "5432")
     .withEnv("DB_USERNAME", "username")
     .withEnv("DB_PASSWORD", "password")
-    .withEnv("DB_DATABASE", "postgres");
+    .withEnv("DB_DATABASE", "postgres")
+    .waitingFor(Wait.forHttp("/").forStatusCode(404));
 
   @BeforeAll
   static void beforeClass() {
