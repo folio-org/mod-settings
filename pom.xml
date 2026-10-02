@@ -35,9 +35,7 @@
     <vertxlib.version>4.1.2</vertxlib.version>
     <vertx.launcher>io.vertx.launcher.application.VertxApplication</vertx.launcher>
     <vertx.verticle>org.folio.settings.server.main.MainVerticle</vertx.verticle>
-    <java.version>21</java.version>
-    <maven.compiler.source>21</maven.compiler.source>
-    <maven.compiler.target>21</maven.compiler.target>
+    <java.version>25</java.version>
     <folio-module-descriptor-validator.version>1.0.1</folio-module-descriptor-validator.version>
   </properties>
 
@@ -363,6 +361,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.15.0</version>
         <configuration>
+          <release>${java.version}</release>
           <encoding>UTF-8</encoding>
             <compilerArgs>
               <arg>-proc:none</arg>
